@@ -121,7 +121,7 @@ try(sqlDrop(channel1, "tblspselect"), silent=T)
                            "tblWatch.Visibility",
                            "tblWatch.SeaState",
                            "tblWatch.Swell",
-                           "tblWatch.SeaState",
+                           "tblWatch.Weather",
                            "tblWatch.Glare",
                            "tblCruise.Quebec",
                            "DatePart('yyyy',[Date]) AS [Year]",
@@ -183,7 +183,9 @@ try(sqlDrop(channel1, "tblspselect"), silent=T)
                                  "StartTime","EndTime","LatStart","LongStart","WatchLenKm",     
                                  "Alpha","English","Latin","Distance","Count",    
                                  "FlySwim","InTransect","Snapshot",       
-                                 "ObserverID","Experience","Visibility","SeaState","Swell","PlatformType")]
+                                 "ObserverID","Experience",
+                                 "Visibility","SeaState","Swell","Weather", "Glare",
+                                 "PlatformType")]
   
   #Return to the working drive
   setwd(wd)
