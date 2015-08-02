@@ -1,3 +1,25 @@
+#' @export
+#'@title Extract the information for the Global ECSAS database
+#'
+#'@description The function will connect to the Access database, create a series of queries and import the desired information in a data frame.
+#'@param sp Alpha code for the specie desired in the extraction. If more than one species all the desired species must be saved into a vector ex: c("COMU,"TBMU", "UNMU") 
+#'@param years Years desired for the extraction
+#'@param lat Pairs of coordinate giving the southern and northern limits of the range desired.
+#'@param long Pairs of coordinate giving the western and eastern limits of the range desired. Note that longitude values must be negative.
+#'@param obs.keep Name of the observer to keep for the extraction. The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").
+#'@param Obs.exclude
+#'@param Qc
+#'@param snapshot
+#'@param intransect
+#'@param ecsas.drive
+#'@param ecsas.file
+#'@details
+#'The function will produce a data frame that will contains all the pertinent information. 
+#'@section Author:Christian Roy
+#'
+#'@seealso \code{\link{QC.extract}}
+
+
 ECSAS.extract <-
 function(sp="ATPU",  years=c(2006,2013), lat=c(30,70), long=c(-70, -30), Obs.keep=NA, Obs.exclude=NA, 
                          Qc=F, snapshot=T, intransect=T, ecsas.drive="C:/Users/christian/Dropbox/ECSAS", 
@@ -99,6 +121,8 @@ try(sqlDrop(channel1, "tblspselect"), silent=T)
                            "tblWatch.Visibility",
                            "tblWatch.SeaState",
                            "tblWatch.Swell",
+                           "tblWatch.SeaState",
+                           "tblWatch.Glare",
                            "tblCruise.Quebec",
                            "DatePart('yyyy',[Date]) AS [Year]",
                            "DatePart('m',[Date]) AS [Month]",
