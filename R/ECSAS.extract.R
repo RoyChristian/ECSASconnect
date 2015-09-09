@@ -28,6 +28,16 @@ wd<-getwd()
 setwd(ecsas.drive)
 channel1 <- odbcConnectAccess(ecsas.file, uid="")
 
+##correction for year=1
+if(lenght(years)==1){
+  years <- c(years-1,years)
+  
+}
+##correction for year=1
+if(years[1]==years[2]){
+  years[1] <- years[2]-1
+}
+
 #Make sure the tempo table doesn't exist
 try(sqlDrop(channel1, "tblspselect"), silent=T)
 
