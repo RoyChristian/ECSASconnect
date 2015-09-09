@@ -5,9 +5,9 @@
 \title{Extract the information for the Global ECSAS database}
 \usage{
 ECSAS.extract(sp = "ATPU", years = c(2006, 2013), lat = c(30, 70),
-  long = c(-70, -30), Obs.keep = NA, Obs.exclude = NA, Qc = F,
-  snapshot = T, intransect = T,
-  ecsas.drive = "C:/Users/christian/Dropbox/ECSAS",
+  long = c(-70, -30), Obs.keep = NA, Obs.exclude = NA,
+  database = c("Atlantic", "Quebec", "Both"), snapshot = T,
+  intransect = T, ecsas.drive = "C:/Users/christian/Dropbox/ECSAS",
   ecsas.file = "Master ECSAS_backend v 3.31.mdb")
 }
 \arguments{
@@ -21,8 +21,6 @@ ECSAS.extract(sp = "ATPU", years = c(2006, 2013), lat = c(30, 70),
 
 \item{Obs.exclude}{}
 
-\item{Qc}{}
-
 \item{snapshot}{}
 
 \item{intransect}{}
@@ -32,6 +30,10 @@ ECSAS.extract(sp = "ATPU", years = c(2006, 2013), lat = c(30, 70),
 \item{ecsas.file}{}
 
 \item{obs.keep}{Name of the observer to keep for the extraction. The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").}
+
+\item{Atl}{}
+
+\item{Qc}{}
 }
 \description{
 The function will connect to the Access database, create a series of queries and import the desired information in a data frame.

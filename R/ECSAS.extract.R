@@ -7,12 +7,12 @@
 #'@param lat Pairs of coordinate giving the southern and northern limits of the range desired.
 #'@param long Pairs of coordinate giving the western and eastern limits of the range desired. Note that longitude values must be negative.
 #'@param obs.keep Name of the observer to keep for the extraction. The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").
-#'@param Obs.exclude
-#'@param Qc
-#'@param snapshot
-#'@param intransect
-#'@param ecsas.drive
-#'@param ecsas.file
+#'@param Obs.exclude Name of the observer to exlude for the extraction.The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").
+#'@param database From which database the extraction must be made. Currently restricted to Atlantic and/or Quebec.
+#'@param snapshot Should we keep only the birds counted during the snapshot or not 
+#'@param intransect Should we keep only the birds counted on the transect or not. 
+#'@param ecsas.drive Where is located the ECSAS Access database
+#'@param ecsas.file  What is the name of the ECSAS Access database
 #'@details
 #'The function will produce a data frame that will contains all the pertinent information. 
 #'@section Author:Christian Roy
@@ -22,8 +22,13 @@
 
 ECSAS.extract <-
 function(sp="ATPU",  years=c(2006,2013), lat=c(30,70), long=c(-70, -30), Obs.keep=NA, Obs.exclude=NA, 
-                         Qc=F, snapshot=T, intransect=T, ecsas.drive="C:/Users/christian/Dropbox/ECSAS", 
+                         database=c("Atlantic","Quebec","Both"), snapshot=T, intransect=T, 
+                         ecsas.drive="C:/Users/christian/Dropbox/ECSAS", 
                          ecsas.file="Master ECSAS_backend v 3.31.mdb"){
+
+###
+database<- match.arg(database)
+  
 wd<-getwd()
 setwd(ecsas.drive)
 channel1 <- odbcConnectAccess(ecsas.file, uid="")
@@ -71,7 +76,16 @@ if("tblspselect"%in%sqlTables(channel1)$TABLE_NAME){
   
   lat.selection <-  paste("WHERE (((tblWatch.LatStart)>=",lat[1]," And (tblWatch.LatStart)<=",lat[2],")",sep="")  
   long.selection <- paste("AND ((tblWatch.LongStart)>=",long[1]," And (tblWatch.LongStart)<=",long[2],")",sep="")  
-  Quebec <- paste("AND ((tblCruise.Quebec)=",Qc,")",sep="")
+  if(database=="Atlantic"){
+      selected.database <- "AND ((tblCruise.Atlantic)=TRUE)"
+  }else{
+      if(database=="Quebec"){
+        selected.database <- "AND ((tblCruise.Quebec)=TRUE)"
+      }else{
+        selected.database <- "AND ((tblCruise.Atlantic)=TRUE) OR ((tblCruise.Quebec)=TRUE)" 
+      }
+  }
+  
   year.selection <- paste("AND ((DatePart('yyyy',[Date]))Between ",years[1]," And ",years[2],"))",sep="")  
 
   #First select species
@@ -137,6 +151,7 @@ if("tblspselect"%in%sqlTables(channel1)$TABLE_NAME){
                            "tblWatch.Swell",
                            "tblWatch.Weather",
                            "tblWatch.Glare",
+                           "tblCruise.Atlantic",
                            "tblCruise.Quebec",
                            "DatePart('yyyy',[Date]) AS [Year]",
                            "DatePart('m',[Date]) AS [Month]",
@@ -151,7 +166,7 @@ if("tblspselect"%in%sqlTables(channel1)$TABLE_NAME){
                      paste(lat.selection,
                            long.selection,
                            "AND ((([PlatformSpeed]*[ObsLen]/60*1.852)) Is Not Null And (([PlatformSpeed]*[ObsLen]/60*1.852))>0)",
-                           Quebec,
+                           selected.database,
                            snapshot.selection,
                            year.selection,
                            sep=" "),
