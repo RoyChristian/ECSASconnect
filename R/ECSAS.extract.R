@@ -43,7 +43,9 @@ if(years[1]==years[2]){
 }
 
 #Make sure the tempo table doesn't exist
-try(sqlDrop(channel1, "tblspselect"), silent=T)
+if("tblspselect"%in%sqlTables(channel1)$TABLE_NAME){
+    sqlDrop(channel1, "tblspselect")
+}
 
 #write queries
   if(length(sp)>=2){
