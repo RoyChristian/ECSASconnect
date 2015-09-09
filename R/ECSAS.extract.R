@@ -29,7 +29,7 @@ setwd(ecsas.drive)
 channel1 <- odbcConnectAccess(ecsas.file, uid="")
 
 ##correction for year=1
-if(lenght(years)==1){
+if(length(years)==1){
   years <- c(years-1,years)
   
 }
