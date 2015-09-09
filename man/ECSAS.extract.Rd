@@ -19,21 +19,19 @@ ECSAS.extract(sp = "ATPU", years = c(2006, 2013), lat = c(30, 70),
 
 \item{long}{Pairs of coordinate giving the western and eastern limits of the range desired. Note that longitude values must be negative.}
 
-\item{Obs.exclude}{}
+\item{Obs.exclude}{Name of the observer to exlude for the extraction.The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").}
 
-\item{snapshot}{}
+\item{database}{From which database the extraction must be made. Currently restricted to Atlantic and/or Quebec.}
 
-\item{intransect}{}
+\item{snapshot}{Should we keep only the birds counted during the snapshot or not}
 
-\item{ecsas.drive}{}
+\item{intransect}{Should we keep only the birds counted on the transect or not.}
 
-\item{ecsas.file}{}
+\item{ecsas.drive}{Where is located the ECSAS Access database}
+
+\item{ecsas.file}{What is the name of the ECSAS Access database}
 
 \item{obs.keep}{Name of the observer to keep for the extraction. The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").}
-
-\item{Atl}{}
-
-\item{Qc}{}
 }
 \description{
 The function will connect to the Access database, create a series of queries and import the desired information in a data frame.
