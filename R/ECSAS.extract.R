@@ -29,13 +29,17 @@ setwd(ecsas.drive)
 channel1 <- odbcConnectAccess(ecsas.file, uid="")
 
 ##correction for year=1
+## currently a hack
+## we need to year to make the query work I add the year before to the extraction and delete it
+hack.year=FALSE
 if(length(years)==1){
   years <- c(years-1,years)
-  
+  hack.year=TRUE
 }
-##correction for year=1
+##alternative way to include only one year
 if(years[1]==years[2]){
   years[1] <- years[2]-1
+  hack.year=TRUE
 }
 
 #Make sure the tempo table doesn't exist
@@ -155,6 +159,12 @@ try(sqlDrop(channel1, "tblspselect"), silent=T)
   #Do query
   transects.df <- sqlQuery(channel1, my.query2)
 
+  ######one year hack
+  if(hack.year==TRUE){
+    transects.df <- subset(transects.df ,transects.df$Year==max(years)) 
+  }
+  
+  
   #Fix the observer problem
   my.query3<- "SELECT lkpObserver.ObserverName, lkpObserver.ObserverID FROM lkpObserver"
   observer.df <-  sqlQuery(channel1, my.query3)
