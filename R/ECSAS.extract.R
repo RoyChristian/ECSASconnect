@@ -69,8 +69,8 @@ if("tblspselect"%in%sqlTables(channel1)$TABLE_NAME){
   snapshot.selection=paste("") 
   }
   
-  lat.selection <-  paste("WHERE (((tblWatch.LatStart)>=",lat[1]," And (tblWatch.LatStart)<",lat[2],")",sep="")  
-  long.selection <- paste("AND ((tblWatch.LongStart)>=",long[1]," And (tblWatch.LongStart)<-",long[2],")",sep="")  
+  lat.selection <-  paste("WHERE (((tblWatch.LatStart)>=",lat[1]," And (tblWatch.LatStart)<=",lat[2],")",sep="")  
+  long.selection <- paste("AND ((tblWatch.LongStart)>=",long[1]," And (tblWatch.LongStart)<=",long[2],")",sep="")  
   Quebec <- paste("AND ((tblCruise.Quebec)=",Qc,")",sep="")
   year.selection <- paste("AND ((DatePart('yyyy',[Date]))Between ",years[1]," And ",years[2],"))",sep="")  
 
