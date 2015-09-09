@@ -74,8 +74,6 @@ if("tblspselect"%in%sqlTables(channel1)$TABLE_NAME){
   Quebec <- paste("AND ((tblCruise.Quebec)=",Qc,")",sep="")
   year.selection <- paste("AND ((DatePart('yyyy',[Date]))Between ",years[1]," And ",years[2],"))",sep="")  
 
-
-
   #First select species
   my.query <- paste(paste("SELECT tblSpeciesInfo.Alpha",
                           "tblSpeciesInfo.English",
