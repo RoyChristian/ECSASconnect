@@ -17,7 +17,6 @@
 #'
 #'@seealso \code{\link{ECSAS.extract}}
 
-
 QC.extract <-
 function(sp="ATPU",  years=c(2006,2013), lat=c(30,70), long=c(-70, -30), 
                        Obs.keep=NA, Obs.exclude=NA, intransect=T, 
@@ -49,7 +48,6 @@ function(sp="ATPU",  years=c(2006,2013), lat=c(30,70), long=c(-70, -30),
   if("tblmissionselect"%in%sqlTables(channel1)$TABLE_NAME){
     sqlDrop(channel1, "tblmissionselect")
   }
-  
   
   #write queries
   if(length(sp)>=2){
