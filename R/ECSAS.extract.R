@@ -146,6 +146,7 @@ if("tblspselect"%in%sqlTables(channel1)$TABLE_NAME){
                            "tblWatch.Snapshot",
                            "tblWatch.ObservationType AS [Experience]",
                            "tblCruise.PlatformType AS [PlatformTypeID]",
+                           "tblCruise.PlatformName AS [PlatformID]",
                            "tblWatch.Visibility",
                            "tblWatch.SeaState",
                            "tblWatch.Swell",
@@ -187,8 +188,13 @@ if("tblspselect"%in%sqlTables(channel1)$TABLE_NAME){
   transects.df <-droplevels(transects.df)
   
   my.query4<- "SELECT lkpPlatformType.PlatformTypeID, lkpPlatformType.PlatformType FROM lkpPlatformType"          
-  platform.df <-  sqlQuery(channel1, my.query4)
-  transects.df <- join(transects.df, platform.df, by="PlatformTypeID")
+  platform_type.df <-  sqlQuery(channel1, my.query4)
+  transects.df <- join(transects.df, platform_type.df, by="PlatformTypeID")
+  transects.df <-droplevels(transects.df)
+  
+  my.query5<- "SELECT lkpPlatform.PlatformID, lkpPlatform.PlatformText FROM lkpPlatform"          
+  platform.df <-  sqlQuery(channel1, my.query5)
+  transects.df <- join(transects.df, platform.df, by="PlatformID")
   transects.df <-droplevels(transects.df)
   
   #Fix the Observer name
@@ -220,7 +226,7 @@ if("tblspselect"%in%sqlTables(channel1)$TABLE_NAME){
                                  "FlySwim","InTransect","Snapshot",       
                                  "ObserverID","Experience",
                                  "Visibility","SeaState","Swell","Weather", "Glare",
-                                 "PlatformType")]
+                                 "PlatformType","PlatformText")]
   
   #Return to the working drive
   setwd(wd)
