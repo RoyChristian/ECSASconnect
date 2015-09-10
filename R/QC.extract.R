@@ -1,23 +1,62 @@
+#' @export
+#'@title Extract the information for the Quebec ECSAS database
+#'
+#'@description The function will connect to the Access database, create a series of queries and import the desired information in a data frame.
+#'@param sp Alpha code for the specie desired in the extraction. If more than one species all the desired species must be saved into a vector ex: c("COMU,"TBMU", "UNMU") 
+#'@param years Years desired for the extraction
+#'@param lat Pairs of coordinate giving the southern and northern limits of the range desired.
+#'@param long Pairs of coordinate giving the western and eastern limits of the range desired. Note that longitude values must be negative.
+#'@param obs.keep Name of the observer to keep for the extraction. The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").
+#'@param Obs.exclude Name of the observer to exlude for the extraction.The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").
+#'@param intransect Should we keep only the birds counted on the transect or not. 
+#'@param ecsas.drive Where is located the Quebec ECSAS Access database
+#'@param ecsas.file  What is the name of the Quebec ECSAS Access database
+#'@details
+#'The function will produce a data frame that will contains all the pertinent information. 
+#'@section Author:Christian Roy
+#'
+#'@seealso \code{\link{ECSAS.extract}}
+
+
 QC.extract <-
 function(sp="ATPU",  years=c(2006,2013), lat=c(30,70), long=c(-70, -30), 
-                       intransect=T, Obs.keep=NA, Obs.exclude=NA,
+                       Obs.keep=NA, Obs.exclude=NA, intransect=T, 
                        ecsas.drive="C:/Users/christian/Dropbox/ECSAS", ecsas.file="Oiseaux marins 2006-2014.accdb"){
 
   wd<-getwd()
   setwd(ecsas.drive)
   channel1 <- odbcConnectAccess2007(ecsas.file, uid="")
   
-  #Make sure the tempo table don't exist
-  try(sqlDrop(channel1, "tblspselect"), silent=T)
-  try(sqlDrop(channel1, "tblmissionselect"), silent=T)
-
-
+  ##correction for year=1
+  ## currently a hack
+  ## we need to year to make the query work I add the year before to the extraction and delete it
+  hack.year=FALSE
+  if(length(years)==1){
+    years <- c(years-1,years)
+    hack.year=TRUE
+  }
+  ##alternative way to include only one year
+  if(years[1]==years[2]){
+    years[1] <- years[2]-1
+    hack.year=TRUE
+  }
+  
+  #Make sure the tempo table doesn't exist
+  if("tblspselect"%in%sqlTables(channel1)$TABLE_NAME){
+    sqlDrop(channel1, "tblspselect")
+  }
+  #Make sure the tempo table doesn't exist
+  if("tblmissionselect"%in%sqlTables(channel1)$TABLE_NAME){
+    sqlDrop(channel1, "tblmissionselect")
+  }
+  
+  
   #write queries
   if(length(sp)>=2){
-    multi.sp <- paste0(sapply(1:length(sp),function(i){paste("([Code espèces].[Code AN])='",sp[i],"'",sep="")}), collapse=" Or ")
+    multi.sp <- paste0(sapply(1:length(sp),function(i){paste("([Code esp?ces].[Code AN])='",sp[i],"'",sep="")}), collapse=" Or ")
     sp.selection <- paste("WHERE ((",multi.sp,") AND ((OBSERVATION.[Distance parallele]) Like '[A-D]') AND ((OBSERVATION.Mission)<>'NA')")
   }else{
-    unique.sp <- paste("([Code espèces].[Code AN])='",sp,"')",sep="")
+    unique.sp <- paste("([Code esp?ces].[Code AN])='",sp,"')",sep="")
     sp.selection <- paste("WHERE ((",unique.sp," AND ((OBSERVATION.[Distance parallele]) Like '[A-D]') AND ((OBSERVATION.Mission)<>'NA')")
   }
 
@@ -27,24 +66,23 @@ function(sp="ATPU",  years=c(2006,2013), lat=c(30,70), long=c(-70, -30),
   intransect.selection=paste(")") 
   }
 
-
   #write queries
-  lat.selection <-  paste("WHERE (((Transect.Latitude)>=",lat[1]," And (Transect.Latitude)<",lat[2],")",sep="")  
-  long.selection <- paste("AND ((Transect.Longitude)>=",long[1]," And (Transect.Longitude)<-",long[2],")",sep="")  
+  lat.selection <-  paste("WHERE (((Transect.Latitude)>=",lat[1]," And (Transect.Latitude)<=",lat[2],")",sep="")  
+  long.selection <- paste("AND ((Transect.Longitude)>=",long[1]," And (Transect.Longitude)<=",long[2],")",sep="")  
   year.selection <- paste("AND ((DatePart('yyyy',[Date]))Between ",years[1]," And ",years[2],"))",sep="")  
   
 
-  my.query <-  paste(paste("SELECT [Code espèces].[Code AN] As[Alpha]", 
-                   "[Code espèces].[Nom AN] As [English]", 
-                   "[Code espèces].[Nom LAT] As [Latin]", 
+  my.query <-  paste(paste("SELECT [Code esp?ces].[Code AN] As[Alpha]", 
+                   "[Code esp?ces].[Nom AN] As [English]", 
+                   "[Code esp?ces].[Nom LAT] As [Latin]", 
                    "OBSERVATION.[Distance parallele] As [Distance]", 
                    "OBSERVATION.[Nb individu] As [Count]",
                    "OBSERVATION.[ID transect] As [ID]", 
                    "OBSERVATION.Mission", 
                    "OBSERVATION.Snapshot As [FlySwim]", 
                    "OBSERVATION.InTransect",sep=", "),
-              paste("FROM [Code Distance Par] INNER JOIN ([Code espèces] INNER JOIN OBSERVATION", 
-                    "ON [Code espèces].[Code FR] = OBSERVATION.[Code espece])", 
+              paste("FROM [Code Distance Par] INNER JOIN ([Code esp?ces] INNER JOIN OBSERVATION", 
+                    "ON [Code esp?ces].[Code FR] = OBSERVATION.[Code espece])", 
                     "ON [Code Distance Par].[Code distance] = OBSERVATION.[Distance parallele]",sep=" "),
               sp.selection, 
               intransect.selection,
@@ -78,7 +116,7 @@ function(sp="ATPU",  years=c(2006,2013), lat=c(30,70), long=c(-70, -30),
                              "tblmissionselect.EndDate", 
                              "Transect.ID AS WatchID", 
                              "[Code Observateurs].Nom", 
-                             "[Code Observateurs].Prénom", 
+                             "[Code Observateurs].Pr?nom", 
                              "Transect.Date",
                              "Transect.Date_heure AS [StartTime]",
                              "Transect.Latitude AS LatStart", 
@@ -114,8 +152,13 @@ function(sp="ATPU",  years=c(2006,2013), lat=c(30,70), long=c(-70, -30),
   
     #Do query
     transects.df <- sqlQuery(channel1, my.query3)
-    transects.df$ObserverID <-as.factor(paste(transects.df$Nom,transects.df$Prénom, sep="_"))
+    transects.df$ObserverID <-as.factor(paste(transects.df$Nom,transects.df$Pr?nom, sep="_"))
     levels(transects.df$FlySwim)<-c("F","W")
+    
+    ######one year hack
+    if(hack.year==TRUE){
+      transects.df <- subset(transects.df ,transects.df$Year==max(years)) 
+    }
     
     #delete tempo table and close connection
     sqlDrop(channel1, "tblspselect")
