@@ -1,7 +1,7 @@
 Package: ECSASconnect
 Type: Package
 Title: Import data from the Eastern Canada Seabirds at Sea (ECSAS) database
-Version: 0.4
+Version: 0.4.1
 Date: 2014-03-30
 Author: Christian Roy
 Maintainer: Francois Bolduc <francois.Bolduc@ec.gc.ca>
