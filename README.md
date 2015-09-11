@@ -2,7 +2,7 @@ ECSASconnect
 =======
 Import data from the Eastern Canada Seabirds at Sea (ECSAS) database
 
-Version 0.4.1
+Version 0.5
 =======
 * Modified ECSAS.extract to get the ship name in the extraction
 * Modified ECSAS.extract weather and glare to the observation
