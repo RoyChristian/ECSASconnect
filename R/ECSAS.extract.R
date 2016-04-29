@@ -21,216 +21,220 @@
 
 
 ECSAS.extract <-
-function(sp="ATPU",  years=c(2006,2013), lat=c(30,70), long=c(-70, -30), Obs.keep=NA, Obs.exclude=NA, 
-                         database=c("Atlantic","Quebec","Both"), snapshot=T, intransect=T, 
-                         ecsas.drive="C:/Users/christian/Dropbox/ECSAS", 
-                         ecsas.file="Master ECSAS_backend v 3.31.mdb"){
-
-###
-database<- match.arg(database)
-  
-wd<-getwd()
-setwd(ecsas.drive)
-channel1 <- odbcConnectAccess(ecsas.file, uid="")
-
-##correction for year=1
-## currently a hack
-## we need to year to make the query work I add the year before to the extraction and delete it
-hack.year=FALSE
-if(length(years)==1){
-  years <- c(years-1,years)
-  hack.year=TRUE
-}
-##alternative way to include only one year
-if(years[1]==years[2]){
-  years[1] <- years[2]-1
-  hack.year=TRUE
-}
-
-#Make sure the tempo table doesn't exist
-if("tblspselect"%in%sqlTables(channel1)$TABLE_NAME){
-    sqlDrop(channel1, "tblspselect")
-}
-
-#write queries
-  if(length(sp)>=2){
-    multi.sp <- paste0(sapply(1:length(sp),function(i){paste("(tblSpeciesInfo.Alpha)='",sp[i],"'",sep="")}), collapse=" Or ")
-    sp.selection <- paste("WHERE ((",multi.sp,") AND ((tblSpeciesInfo.Class)='Bird') AND ((lkpDistanceCenters.Distance) Is Not Null)")
-  }else{
-    unique.sp <- paste("(tblSpeciesInfo.Alpha)='",sp,"')",sep="")
-    sp.selection <- paste("WHERE ((",unique.sp," AND ((tblSpeciesInfo.Class)='Bird') AND ((lkpDistanceCenters.Distance) Is Not Null)")
-  }
-  
-  if(intransect){
-  intransect.selection=paste("AND ((tblSighting.InTransect)=True))")
-  }else{
-  intransect.selection=paste(")") 
-  }
-  
-  
-  if(snapshot){
-  snapshot.selection=paste("AND ((tblWatch.Snapshot)=True)")
-  }else{
-  snapshot.selection=paste("") 
-  }
-  
-  lat.selection <-  paste("WHERE (((tblWatch.LatStart)>=",lat[1]," And (tblWatch.LatStart)<=",lat[2],")",sep="")  
-  long.selection <- paste("AND ((tblWatch.LongStart)>=",long[1]," And (tblWatch.LongStart)<=",long[2],")",sep="")  
-  if(database=="Atlantic"){
+  function(sp="ATPU",  years=c(2006,2013), lat=c(30,70), long=c(-70, -30), Obs.keep=NA, Obs.exclude=NA, 
+           database=c("Atlantic","Quebec","Both"), snapshot=T, intransect=T, 
+           ecsas.drive="C:/Users/christian/Dropbox/ECSAS", 
+           ecsas.file="Master ECSAS_backend v 3.31.mdb"){
+    
+    ###Make sure arguments works
+    database<- match.arg(database)
+    
+    ###setwd and open connection    
+    wd<-getwd()
+    setwd("C:/Users/Christian/Google Drive/ECSAS")
+    channel1 <- odbcConnectAccess("Master ECSAS v 3.33.mdb", uid="")
+    
+    ##correction for year=1
+    ## currently a hack
+    ## we need to year to make the query work I add the year before to the extraction and delete it
+    hack.year=FALSE
+    if(length(years)==1){
+      years <- c(years-1,years)
+      hack.year=TRUE
+    }
+    ##alternative way to include only one year
+    if(years[1]==years[2]){
+      years[1] <- years[2]-1
+      hack.year=TRUE
+    }
+    
+    #Make sure the tempo table doesn't exist
+    if("tblspselect"%in%sqlTables(channel1)$TABLE_NAME){
+      sqlDrop(channel1, "tblspselect")
+    }
+    
+    #Write SQL selection for intransect birds
+    if(intransect){
+      intransect.selection=paste("AND ((tblSighting.InTransect)=True)")
+    }else{
+      intransect.selection=paste(")") 
+    }
+    
+    #Write SQL selection for snapshor
+    if(snapshot){
+      snapshot.selection=paste("AND ((tblWatch.Snapshot)=True)")
+    }else{
+      snapshot.selection=paste("") 
+    }
+    
+    
+    ####write SQL selection for latitude and longitude
+    lat.selection <-  paste("WHERE (((tblWatch.LatStart)>=",lat[1]," And (tblWatch.LatStart)<=",lat[2],")",sep="")  
+    long.selection <- paste("AND ((tblWatch.LongStart)>=",long[1]," And (tblWatch.LongStart)<=",long[2],")",sep="")  
+    if(database=="Atlantic"){
       selected.database <- "AND ((tblCruise.Atlantic)=TRUE)"
-  }else{
+    }else{
       if(database=="Quebec"){
         selected.database <- "AND ((tblCruise.Quebec)=TRUE)"
       }else{
         selected.database <- "AND ((tblCruise.Atlantic)=TRUE) OR ((tblCruise.Quebec)=TRUE)" 
       }
-  }
-  
-  year.selection <- paste("AND ((DatePart('yyyy',[Date]))Between ",years[1]," And ",years[2],"))",sep="")  
-
-  #First select species
-  my.query <- paste(paste("SELECT tblSpeciesInfo.Alpha",
-                          "tblSpeciesInfo.English",
-                          "tblSpeciesInfo.Latin",
-                          "tblSpeciesInfo.Class",
-                          "lkpDistanceCenters.Distance",
-                          "tblSighting.FlockID",
-                          "tblSighting.OldPiropID",
-                          "tblSighting.WatchID",
-                          "tblSighting.InTransect",
-                          "tblSighting.Association",
-                          "tblSighting.InexpAssoc",
-                          "tblSighting.Behaviour",
-                          "tblSighting.InexpFeed",
-                          "tblSighting.FlightDir",
-                          "tblSighting.FlySwim",
-                          "tblSighting.SpecInfoID",
-                          "tblSighting.Count",
-                          "tblSighting.Age",
-                          "tblSighting.Plumage",
-                          "tblSighting.Sex",
-                          "tblSighting.GroupID",
-                          "tblSighting.InGroup", sep=", "),
-                          paste("FROM tblSpeciesInfo",
-                                "INNER JOIN (tblSighting LEFT JOIN lkpDistanceCenters ON tblSighting.Distance = lkpDistanceCenters.DistanceCode)",
-                                "ON tblSpeciesInfo.SpecInfoID = tblSighting.SpecInfoID", sep=" "),
-                          sp.selection,
-                          intransect.selection,
-                          sep=" ")
-  
-  #Run query and save in temporary table
-  sp.query <- sqlQuery(channel1, my.query)
-  sp.query <- subset(sp.query,  sp.query$Distance<300) 
-  sqlSave(channel1, sp.query, tablename = "tblspselect")
-  
-  
-  #Query for all the transects now
-  my.query2<- paste(paste("SELECT tblCruise.[CruiseID] AS [CruiseID]",
-                           "tblCruise.[Start Date] AS [StartDate]",
-                           "tblCruise.[End Date] AS [EndDate]",
-                           "tblWatch.WatchID AS [WatchID]",
-                           "tblWatch.Observer AS [ObserverID]",
-                           "tblWatch.Date AS [Date]",
-                           "tblWatch.StartTime",
-                           "tblWatch.EndTime",
-                           "tblWatch.LatStart AS [LatStart]",
-                           "tblWatch.LongStart AS [LongStart]",
-                           "([PlatformSpeed]*[ObsLen]/60*1.852) AS [WatchLenKm]",
-                           "tblspselect.FlySwim",
-                           "tblspselect.Alpha AS [Alpha]",
-                           "tblspselect.English",
-                           "tblspselect.Latin",
-                           "tblspselect.Distance AS [Distance]",
-                           "tblspselect.InTransect",
-                           "tblspselect.Count AS [Count]",
-                           "tblWatch.Snapshot",
-                           "tblWatch.ObservationType AS [Experience]",
-                           "tblCruise.PlatformType AS [PlatformTypeID]",
-                           "tblCruise.PlatformName AS [PlatformID]",
-                           "tblWatch.Visibility",
-                           "tblWatch.SeaState",
-                           "tblWatch.Swell",
-                           "tblWatch.Weather",
-                           "tblWatch.Glare",
-                           "tblCruise.Atlantic",
-                           "tblCruise.Quebec",
-                           "DatePart('yyyy',[Date]) AS [Year]",
-                           "DatePart('m',[Date]) AS [Month]",
-                           "DatePart('ww',[Date]) AS Week",
-                           "DatePart('y',[Date]) AS [Day]", sep=", "),
-                      paste("FROM lkpObserver INNER JOIN (tblCruise INNER JOIN (lkpPlatformClass INNER JOIN",
-                            "(lkpSeaState INNER JOIN (lkpScanType INNER JOIN (tblspselect",
-                            "RIGHT JOIN tblWatch ON tblspselect.WatchID = tblWatch.WatchID)",
-                            "ON lkpScanType.ScanTypeID = tblWatch.ScanType) ON lkpSeaState.SeaStateID = tblWatch.SeaState)",
-                            "ON lkpPlatformClass.PlatformClassID = tblWatch.PlatformClass)",
-                            "ON tblCruise.CruiseID = tblWatch.CruiseID) ON lkpObserver.ObserverID = tblWatch.Observer", sep=" "),
-                     paste(lat.selection,
-                           long.selection,
-                           "AND ((([PlatformSpeed]*[ObsLen]/60*1.852)) Is Not Null And (([PlatformSpeed]*[ObsLen]/60*1.852))>0)",
-                           selected.database,
-                           snapshot.selection,
-                           year.selection,
-                           sep=" "),
-                      paste("ORDER BY tblWatch.WatchID"), sep=" ")
-  #Do query
-  transects.df <- sqlQuery(channel1, my.query2)
-
-  ######one year hack
-  if(hack.year==TRUE){
-    transects.df <- subset(transects.df ,transects.df$Year==max(years)) 
-  }
-  
-  
-  #Fix the observer problem
-  my.query3<- "SELECT lkpObserver.ObserverName, lkpObserver.ObserverID FROM lkpObserver"
-  observer.df <-  sqlQuery(channel1, my.query3)
-  transects.df <- join(transects.df, observer.df , by="ObserverID")
-  transects.df <-droplevels(transects.df)
-  
-  my.query4<- "SELECT lkpPlatformType.PlatformTypeID, lkpPlatformType.PlatformType FROM lkpPlatformType"          
-  platform_type.df <-  sqlQuery(channel1, my.query4)
-  transects.df <- join(transects.df, platform_type.df, by="PlatformTypeID")
-  transects.df <-droplevels(transects.df)
-  
-  my.query5<- "SELECT lkpPlatform.PlatformID, lkpPlatform.PlatformText FROM lkpPlatform"          
-  platform.df <-  sqlQuery(channel1, my.query5)
-  transects.df <- join(transects.df, platform.df, by="PlatformID")
-  transects.df <-droplevels(transects.df)
-  
-  #Fix the Observer name
-  transects.df$ObserverName <- as.factor(sapply(1:nrow(transects.df), function(i){gsub(", ","_",as.character(transects.df$ObserverName[i]) )}))
+    }
     
-  #delete tempo table and close connection
-  sqlDrop(channel1, "tblspselect")
-  odbcCloseAll()
-  
-  #Check for observers
-  if(!is.na(Obs.exclude)){
-    keep1 <- setdiff(levels(transects.df$ObserverName), Obs.exclude)
-    transects.df <- subset(transects.df, transects.df$ObserverName%in%keep1)
-    transects.df <-droplevels(transects.df)
+    
+    #write SQL selection for year
+    year.selection <- paste("AND ((DatePart('yyyy',[Date]))Between ",years[1]," And ",years[2],"))",sep="")  
+    
+    
+    #write SQL selection for species
+    if(length(sp)>=2){
+      nspecies <-paste0(sapply(1:length(sp),function(i){paste("(tblSpeciesInfo.Alpha)='",sp[i],"'",sep="")}), collapse=" Or ")
+      sp.selection <- paste("((",nspecies,")",sep="")
+    }else{
+      sp.selection <- paste("(((tblSpeciesInfo.Alpha)='",sp,"')",sep="")
+    }
+    
+    
+    #SQL queries to import the species table
+    query.species <- paste(paste("SELECT tblSpeciesInfo.Alpha", 
+                                 "tblSpeciesInfo.English", 
+                                 "tblSpeciesInfo.Latin", 
+                                 "tblSpeciesInfo.Class", 
+                                 "tblSpeciesInfo.SpecInfoID", sep=", "),
+                           "FROM tblSpeciesInfo",
+                           "WHERE",
+                           sp.selection,
+                           "AND ((tblSpeciesInfo.Class)='Bird'))", sep=" ")
+    
+    #Excute query for specie
+    specieInfo <-  sqlQuery(channel1, query.species)     
+    
+    
+    #Write a second query that is based on the species number instead of the alpha code
+    if(length(sp)>=2){
+      nspecies2 <- paste0(sapply(1:length(sp),function(i){paste("(tblSighting.SpecInfoID)=",specieInfo$SpecInfoID[i],sep="")}), collapse=" Or ")
+      sp.selection2 <- paste("AND (",nspecies2,")",sep="")
+    }else{
+      sp.selection2 <- paste("AND ((tblSighting.SpecInfoID)=",specieInfo$SpecInfoID,")",sep="")
+    }
+    
+    
+    #Write the query to import the table for sighting
+    query.sighting <-  paste(paste("SELECT tblSighting.WatchID", 
+                                   "tblSighting.SpecInfoID",                          
+                                   "tblSighting.ObsLat", 
+                                   "tblSighting.ObsLong", 
+                                   "tblSighting.ObsTime", 
+                                   "tblSighting.Distance AS [DistanceCode]", 
+                                   "tblSighting.InTransect", 
+                                   "tblSighting.Behaviour", 
+                                   "tblSighting.FlightDir", 
+                                   "tblSighting.FlySwim", 
+                                   "tblSighting.Count", 
+                                   "tblSighting.Age", 
+                                   "tblSighting.Plumage", 
+                                   "tblSighting.Sex", 
+                                   "tblWatch.LatStart", 
+                                   "tblWatch.LongStart", 
+                                   "tblWatch.Date", sep=", "),
+                             paste("FROM tblWatch",
+                                   "INNER JOIN tblSighting ON tblWatch.WatchID = tblSighting.WatchID", sep=" "),
+                             paste(lat.selection,
+                                   long.selection,
+                                   sp.selection2,
+                                   intransect.selection,
+                                   year.selection,
+                                   sep=" "))
+    
+    
+    #Write the query to import the watches table
+    query.watches <-  paste(paste("SELECT tblWatch.CruiseID", 
+                                  "tblCruise.[Start Date] AS [StartDate]",
+                                  "tblCruise.[End Date] AS [EndDate]",
+                                  "tblWatch.WatchID AS [WatchID]",
+                                  "tblWatch.Observer AS [ObserverID]",
+                                  "tblWatch.Date AS [Date]",
+                                  "tblWatch.StartTime",
+                                  "tblWatch.EndTime",
+                                  "tblWatch.LatStart AS [LatStart]",
+                                  "tblWatch.LongStart AS [LongStart]",
+                                  "([PlatformSpeed]*[ObsLen]/60*1.852) AS [WatchLenKm]",
+                                  "tblWatch.Snapshot", 
+                                  "tblWatch.ObservationType AS [Experience]",
+                                  "tblCruise.PlatformType AS [PlatformTypeID]",
+                                  "tblCruise.PlatformName AS [PlatformID]",
+                                  "tblWatch.Visibility", 
+                                  "tblWatch.SeaState", 
+                                  "tblWatch.Swell", 
+                                  "tblWatch.Weather", 
+                                  "tblWatch.Glare", 
+                                  "tblCruise.Atlantic", 
+                                  "tblCruise.Quebec", 
+                                  "DatePart('yyyy',[Date]) AS [Year]",
+                                  "DatePart('m',[Date]) AS [Month]",
+                                  "DatePart('ww',[Date]) AS Week",
+                                  "DatePart('y',[Date]) AS [Day]", sep=", "),
+                            "FROM tblCruise INNER JOIN tblWatch ON tblCruise.CruiseID = tblWatch.CruiseID", 
+                            paste(lat.selection,
+                                  long.selection,
+                                  #"AND ((([PlatformSpeed]*[ObsLen]/60*1.852)) Is Not Null And (([PlatformSpeed]*[ObsLen]/60*1.852))>0)",
+                                  selected.database,
+                                  snapshot.selection,
+                                  year.selection,
+                                  sep=" "),
+                            sep=" ")
+    
+    
+    #Import all the tables needed
+    Sighting <-   sqlQuery(channel1, query.sighting ) 
+    watches <-   sqlQuery(channel1, query.watches) 
+    distance  <- sqlFetch(channel1, "lkpDistanceCenters") 
+    observer <-  sqlFetch(channel1, "lkpObserver")
+    platform.name <-  sqlFetch(channel1, "lkpPlatform")
+    platform.activity <-  sqlFetch(channel1, "lkpPlatformType")
+    #close connection
+    odbcCloseAll()
+    
+    #name change for the second column
+    names(platform.name)[2] <- "PlatformName"
+    
+    
+    #merge and filter the tables for the sigthings 
+    Sighting2 <- join(join(Sighting,specieInfo,by="SpecInfoID",type="left"),
+                      distance,by="DistanceCode") [,c("WatchID","Alpha","English","Latin","Class",
+                                                      "ObsLat","ObsLong","ObsTime","Distance","DistanceCode",
+                                                      "InTransect","Behaviour","FlightDir","FlySwim",
+                                                      "Count","Age","Plumage","Sex")]
+    
+    #merge and filter the tables for the watches 
+    Watches2 <- join(join(join(watches, observer, by="ObserverID"),
+                          platform.name, by="PlatformID", type="left"),
+                     platform.activity,by="PlatformTypeID",type="left") [,c("CruiseID","Atlantic","Quebec", "StartDate",
+                                                                            "EndDate","WatchID","ObserverName","Date","Year","Month","Week","Day","StartTime",
+                                                                            "EndTime", "LatStart","LongStart", "WatchLenKm", "Snapshot","Experience",
+                                                                            "PlatformName","PlatformType", "Visibility","SeaState","Swell","Weather","Glare")]
+    
+    ###Create the final table by joining the observations to the watches  
+    final.df <- join(Watches2,Sighting2, by="WatchID", type="left", match="all")
+    #Change the way the observer names are stored in the table
+    final.df$ObserverName <- as.factor(sapply(1:nrow( final.df), 
+                                          function(i){gsub(", ","_",as.character(final.df$ObserverName[i]) )}))
+    
+    #Select or exlude the observers
+    if(!is.na(Obs.exclude)){
+      keep1 <- setdiff(levels(final.df$ObserverName), Obs.exclude)
+      final.df <- subset(final.df, final.df$ObserverName%in%keep1)
+      final.df <-droplevels(final.df)
+    }
+    
+    if(!is.na(Obs.keep)){
+      final.df <- subset(final.df, final.df$ObserverName%in%Obs.keep)
+      final.df <-droplevels(final.df)
+    }
+    
+    #Return to the working drive
+    setwd(wd)
+    #Export the final product
+    return(final.df)
+    #End
   }
- 
-  if(!is.na(Obs.keep)){
-    transects.df <- subset(transects.df, transects.df$ObserverName%in%Obs.keep)
-    transects.df <-droplevels(transects.df)
-  }
-  transects.df$ObserverID <- transects.df$ObserverName
- 
- 
-  #Put in a nice form
-  transects.df <- transects.df[,c("CruiseID","StartDate","EndDate","WatchID",        
-                                 "Date","Year","Month","Week","Day", 
-                                 "StartTime","EndTime","LatStart","LongStart","WatchLenKm",     
-                                 "Alpha","English","Latin","Distance","Count",    
-                                 "FlySwim","InTransect","Snapshot",       
-                                 "ObserverID","Experience",
-                                 "Visibility","SeaState","Swell","Weather", "Glare",
-                                 "PlatformType","PlatformText")]
-  
-  #Return to the working drive
-  setwd(wd)
-  #Export the final product
-  return(transects.df)
-  #End
-}
