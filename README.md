@@ -2,6 +2,10 @@ ECSASconnect
 =======
 Import data from the Eastern Canada Seabirds at Sea (ECSAS) database
 
+Version 0.6
+=======
+* Made extensive changes to ECSAS.extract to manipulate the tables in R instad of ACCESS
+
 Version 0.5
 =======
 * Modified ECSAS.extract to get the ship name in the extraction
