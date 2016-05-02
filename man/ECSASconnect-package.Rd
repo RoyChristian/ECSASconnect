@@ -13,8 +13,8 @@ The package will work only with R-32 bits since the drivers for Access only exis
 \tabular{ll}{
 Package: \tab ECASconnect\cr
 Type: \tab Package\cr
-Version: \tab 0.4\cr
-Date: \tab 2014-03-25\cr
+Version: \tab 0.6\cr
+Date: \tab 2016-05-02\cr
 License: \tab GPL-2\cr
 }
 The package contains only two functions. One for the global ECAS database and one for the database in Quebec. The output of the two functions are slightly different because of differences in the database.   
