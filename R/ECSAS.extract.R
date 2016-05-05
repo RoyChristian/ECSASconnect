@@ -22,7 +22,7 @@
 
 ECSAS.extract <-
   function(sp="ATPU",  years=c(2006,2013), lat=c(30,70), long=c(-70, -30), Obs.keep=NA, Obs.exclude=NA, 
-           database=c("Atlantic","Quebec","Both"), snapshot=T, intransect=T, 
+           database=c("Atlantic","Quebec","Both","All"), snapshot=T, intransect=T, 
            ecsas.drive="C:/Users/christian/Dropbox/ECSAS", 
            ecsas.file="Master ECSAS_backend v 3.31.mdb"){
     
@@ -68,18 +68,23 @@ ECSAS.extract <-
     }
     
     
-    ####write SQL selection for latitude and longitude
+    #write SQL selection for latitude and longitude
     lat.selection <-  paste("WHERE (((tblWatch.LatStart)>=",lat[1]," And (tblWatch.LatStart)<=",lat[2],")",sep="")  
     long.selection <- paste("AND ((tblWatch.LongStart)>=",long[1]," And (tblWatch.LongStart)<=",long[2],")",sep="")  
+    
+    
+    #write SQL selection for the different type of cruise
     if(database=="Atlantic"){
       selected.database <- "AND ((tblCruise.Atlantic)=TRUE)"
     }else{
       if(database=="Quebec"){
         selected.database <- "AND ((tblCruise.Quebec)=TRUE)"
       }else{
-        selected.database <- "AND ((tblCruise.Atlantic)=TRUE) OR ((tblCruise.Quebec)=TRUE)" 
-      }
-    }
+        if(database=="Both"){
+          selected.database <- "AND ((tblCruise.Atlantic)=TRUE) OR ((tblCruise.Quebec)=TRUE)"
+        }else{
+          selected.database <- ""
+        }}}
     
     
     #write SQL selection for year
