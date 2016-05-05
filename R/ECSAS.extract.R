@@ -29,10 +29,10 @@ ECSAS.extract <-
     ###Make sure arguments works
     database<- match.arg(database)
     
-    ###setwd and open connection    
+    ###setwd and open connection  
     wd<-getwd()
-    setwd("C:/Users/Christian/Google Drive/ECSAS")
-    channel1 <- odbcConnectAccess("Master ECSAS v 3.33.mdb", uid="")
+    setwd(ecsas.drive)
+    channel1 <- odbcConnectAccess(ecsas.file, uid="")
     
     ##correction for year=1
     ## currently a hack
