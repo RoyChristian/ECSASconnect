@@ -8,7 +8,7 @@
 #'@param long Pairs of coordinate giving the western and eastern limits of the range desired. Note that longitude values must be negative.
 #'@param obs.keep Name of the observer to keep for the extraction. The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").
 #'@param Obs.exclude Name of the observer to exlude for the extraction.The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").
-#'@param database From which database the extraction must be made. Currently restricted to Atlantic and/or Quebec.
+#'@param database From which database the extraction must be made. Options are Quebec, Atlantic, both regions or all the observations. All the observations will inlcude the observations made in the PIROP program.  
 #'@param snapshot Should we keep only the birds counted during the snapshot or not 
 #'@param intransect Should we keep only the birds counted on the transect or not. 
 #'@param ecsas.drive Where is located the ECSAS Access database
@@ -91,6 +91,8 @@ ECSAS.extract <-
     year.selection <- paste("AND ((DatePart('yyyy',[Date]))Between ",years[1]," And ",years[2],"))",sep="")  
     
     
+    ###Make sure that sp is in capital letters
+    sp <- toupper(sp)
     #write SQL selection for species
     if(length(sp)>=2){
       nspecies <-paste0(sapply(1:length(sp),function(i){paste("(tblSpeciesInfo.Alpha)='",sp[i],"'",sep="")}), collapse=" Or ")
@@ -112,7 +114,17 @@ ECSAS.extract <-
                            "AND ((tblSpeciesInfo.Class)='Bird'))", sep=" ")
     
     #Excute query for specie
-    specieInfo <-  sqlQuery(channel1, query.species)     
+    specieInfo <-  sqlQuery(channel1, query.species)    
+    
+    ###make sure the species are in the database.
+    if(nrow(specieInfo)!=length(sp)){
+      wrong.sp <-sp[!sp%in%specieInfo$Alpha]
+      if(length(wrong.sp)==1){
+        stop(paste("species code",wrong.sp,"is not included in the database",sep=" "))
+      }else{
+        stop(paste("species code",paste(wrong.sp, collapse=" and "),"are not included in the database",sep=" "))
+      }
+    }
     
     
     #Write a second query that is based on the species number instead of the alpha code
