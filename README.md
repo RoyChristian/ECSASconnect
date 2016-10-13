@@ -7,11 +7,11 @@ Version 0.6.1
 * Added a sanity check to make sure that the requested species where inclued in the database before extraction
 * The extraction is not limited to the Quebec and Atlantic regions anymore and it's now possible to extract all the observations. 
 
-Version 0.6
+Version 0.6.0
 =======
 * Made extensive changes to ECSAS.extract to manipulate the tables in R instad of ACCESS
 
-Version 0.5
+Version 0.5.0
 =======
 * Modified ECSAS.extract to get the ship name in the extraction
 * Modified ECSAS.extract weather and glare to the observation
