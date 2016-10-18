@@ -16,7 +16,7 @@ data2SOMEC(input,dbpath,file_name,prefix)
   \item{input}{Name and path to the .xlsx file to add to the SOMEC access database.}
   \item{dbpath}{Name and path to the SOMEC access database.}
   \item{file_name}{Name of the .xlsx file that contains the appropriate file names.}
-  \item{prefix}{}
+  \item{prefix}{Name of the prefix used to build the id of a mission. The prefix will be pasted to the start date of the mission to build the id (e.g. "HUD")}
 %%     ~~Describe \code{x} here~~
 }
 }

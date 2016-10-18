@@ -2,14 +2,15 @@
 \alias{new_mission}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-Building a template for a new mission
+Build a template for a new mission
 
 }
 \description{
 This function creates an .xlsx excel files to use as a template for a new mission.
 }
 \usage{
-new_mission(input="noms_colonnes_SOMEC-QC.xlsx",output="new_mission.csv")
+new_mission(input="noms_colonnes_SOMEC-QC.xlsx",
+            output="new_mission.csv")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
