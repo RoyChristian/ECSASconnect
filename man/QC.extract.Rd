@@ -49,7 +49,6 @@ Name of the ECAS database with the file extension included.
 \details{
 The function will produce a data frame that will contains all the pertinent information. 
 }
-}
 \author{
 Christian Roy
 }
@@ -69,3 +68,4 @@ The SQL queries used by this function are based on the SQL queries included in t
 #str(foo)
 #head(foo)
 #End
+}
