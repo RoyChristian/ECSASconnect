@@ -8,4 +8,5 @@ Maintainer: Francois Bolduc <francois.Bolduc@ec.gc.ca>
 Description: This package will allow the user extract data from the ECSAS Access database and to export data from the SOMEC to the ECSAS access database. The package will work only with R-32 bits since the drivers for Access only exist in 32 bits. 
 Depends: plyr, RODBC, readxl, xlsx
 License: GPL-2	
+Encoding: UTF-8
 
