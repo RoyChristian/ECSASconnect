@@ -1,23 +1,17 @@
 \name{new_mission}
 \alias{new_mission}
-%- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 Build a template for a new mission
-
 }
 \description{
 This function creates an .xlsx excel files to use as a template for a new mission.
 }
 \usage{
-new_mission(input="noms_colonnes_SOMEC-QC.xlsx",
-            output="new_mission.csv")
+new_mission(input,output="new_mission")
 }
-%- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{input}{Name and path to the .xlsx file containing appropriate names for generating a mission template.}
-  \item{output}{Name and path of the .csv file created.}
-%%     ~~Describe \code{x} here~~
-}
+  \item{input}{Name and path to the .xlsx or .accdb file containing appropriate names for generating a mission template. If the file is an .xlsx file, it has to contain a column "table" giving the type of table (observations, transects or missions) and a column "new_name" giving the names to be used. If the file given is a .accdb file (the SOMEC-QC database), names will simply be taken from the corresponding tables.}
+  \item{output}{Name of the .xlsx file created. The file will be created in the same directory as the input file.}
 }
 \details{
 A new file should be generated before each new mission and used to gather and collect the data.
@@ -34,7 +28,7 @@ Francois Rousseu
 \note{
 }
 \seealso{
-%% ~~objects to See Also as \code{\link{help}}, ~~~
+\code{\link{data2SOMEC}}
 }
 \examples{
 }
