@@ -4,43 +4,45 @@
 
 new_mission<-function(
   
-  input="C:/Users/User/Documents/SCF2016_FR/ECSASconnect/noms_colonnes_SOMEC-QC.xlsx",
+  input=NULL,
   output="new_mission"
   
 ){
   
-  ext<-substr(input,nchar(input)-4,nchar(input))
-  if(!(ext%in%c(".xlsx","accdb"))){
-    stop(paste("No .xlsx or .accdb file name given in input:",input))
-  }
-  if(!any(grep("/",input))){
+  ext<-if(is.null(input)){".data"}else{substr(input,nchar(input)-4,nchar(input))}
+  if(!is.null(input) & !any(grep("/",input))){
     input<-paste0(getwd(),"/",input)  	
   }
-  path<-unlist(strsplit(input,"/"))
+  path<-if(is.null(input)){getwd()}else{unlist(strsplit(input,"/"))}
   if(length(path)==1){
     path<-getwd()
   }else{
     path<-paste(path[-length(path)],collapse="/")
   }	
   sheets<-c("observations","transects","missions")
-  if(ext==".xlsx"){
-    names <- as.data.frame(read_excel(input))
+  if(ext=="accdb"){
+    db<-odbcConnectAccess2007(input)
+    on.exit(odbcClose(db))
+    obs<-sqlFetch(db,"observations",stringsAsFactors=FALSE,max=1)
+    tran<-sqlFetch(db,"transects",stringsAsFactors=FALSE,max=1)
+    mis<-sqlFetch(db,"missions",stringsAsFactors=FALSE,max=1)
+    f<-list(obs,tran,mis)
+    names(f)<-sheets
+    sapply(sheets,function(i){
+      write.xlsx(f[[i]][NA,],paste0(path,"/",output,".xlsx"),sheetName=i,showNA=FALSE,append=TRUE,row.names=FALSE)
+    })    
+  }else{
+    if(ext==".xlsx"){
+      names<-as.data.frame(read_excel(input))
+    }else{
+      data(new_names)
+      names<-new_names
+    }
     sapply(sheets,function(i){
       n<-names[names$table==i,"new_name"]
       f<-as.data.frame(matrix(rep(NA,length(n)),ncol=length(n)))
       names(f)<-n
       write.xlsx(f,paste0(path,"/",output,".xlsx"),sheetName=i,showNA=FALSE,append=TRUE,row.names=FALSE)
-    })    
-  }else{
-    db<-odbcConnectAccess2007(input)
-    obs<-sqlFetch(db,"observations",stringsAsFactors=FALSE,max=1)
-    tran<-sqlFetch(db,"transects",stringsAsFactors=FALSE,max=1)
-    mis<-sqlFetch(db,"missions",stringsAsFactors=FALSE,max=1)
-    on.exit(odbcClose(db))
-    f<-list(obs,tran,mis)
-    names(f)<-sheets
-    sapply(sheets,function(i){
-      write.xlsx(f[[i]][NA,],paste0(path,"/",output,".xlsx"),sheetName=i,showNA=FALSE,append=TRUE,row.names=FALSE)
     })
   }
   cat("File created at ",paste0(path,"/",output,".xlsx"))

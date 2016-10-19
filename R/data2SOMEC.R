@@ -4,8 +4,8 @@ data2SOMEC<-function(
 	
 	input,
 	dbpath,
-	file_name,
-	prefix
+	prefix,
+	old=FALSE
 	
 ){	
 	
@@ -64,19 +64,20 @@ data2SOMEC<-function(
 	}
 	
 	
-	sheets<-excel_sheets(file)
-	tran <- as.data.frame(read_excel(file,sheet=sheets[agrep("transect",sheets,ignore.case=TRUE)][1]),stringsAsFactors=FALSE)
-	obs <- as.data.frame(read_excel(file,sheet=sheets[agrep("observation",sheets,ignore.case=TRUE)][1]),stringsAsFactors=FALSE) 
+	sheets<-excel_sheets(input)
+	tran <- as.data.frame(read_excel(input,sheet=sheets[agrep("transect",sheets,ignore.case=TRUE)][1]),stringsAsFactors=FALSE)
+	obs <- as.data.frame(read_excel(input,sheet=sheets[agrep("observation",sheets,ignore.case=TRUE)][1]),stringsAsFactors=FALSE) 
 	
-	names <- as.data.frame(read_excel(file_name)) 
-	namesT<-names[names[,"table"]=="transects",]
-	namesO<-names[names[,"table"]=="observations",]
-	
-	m<-match(names(tran),namesT[,"data_name"])
-	names(tran)<-namesT[,"new_name"][m]
-	
-	m<-match(names(obs),namesO[,"data_name"])
-	names(obs)<-namesO[,"new_name"][m]
+	if(old){ #si les données proviennent de vieux fichiers excel
+	  data(new_names)
+	  names<-new_names
+	  namesT<-names[names[,"table"]=="transects",]
+	  namesO<-names[names[,"table"]=="observations",]
+   	m<-match(names(tran),namesT[,"data_name"])
+	  names(tran)<-namesT[,"new_name"][m]
+  	m<-match(names(obs),namesO[,"data_name"])
+	  names(obs)<-namesO[,"new_name"][m]
+	}
 	
 	# si pas de id_transect, on supprime la ligne
 	tran<-tran[!is.na(tran$id_transect),]
@@ -124,7 +125,7 @@ data2SOMEC<-function(
 	}
 	
 	sqlSave(db,tran,tablename="transects",append=TRUE,rownames=FALSE,addPK=FALSE,fast=TRUE,colnames=FALSE,varTypes=varTypes)
-	cat(paste(nrow(tran),"lines added to the transects table"))
+	cat(paste(nrow(tran),"lines added to the transects table"),"\n")
 	
 	
 	
@@ -146,7 +147,7 @@ data2SOMEC<-function(
 	}
 	
 	sqlSave(db,obs,tablename="observations",append=TRUE,rownames=FALSE,addPK=FALSE,fast=TRUE,colnames=FALSE,varTypes=varTypes)
-	cat(paste(nrow(obs),"lines added to the observations table"))
+	cat(paste(nrow(obs),"lines added to the observations table"),"\n")
 	
 
 	### missions
@@ -172,7 +173,7 @@ data2SOMEC<-function(
 	}
 	
 	sqlSave(db,mis,tablename="missions",append=TRUE,rownames=FALSE,addPK=FALSE,fast=TRUE,colnames=FALSE,varTypes=varTypes)
-	cat(paste(nrow(mis),"lines added to the missions table"))
+	cat(paste(nrow(mis),"lines added to the missions table"),"\n")
 	
 }
 

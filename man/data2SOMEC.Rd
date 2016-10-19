@@ -9,14 +9,14 @@ Import raw survey data to the SOMEC database.
 This function takes an excel file with the data from a mission and imports it into the SOMEC access database.
 }
 \usage{
-data2SOMEC(input,dbpath,file_name,prefix)
+data2SOMEC(input,dbpath,prefix,old=FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{input}{Name and path to the .xlsx file to add to the SOMEC access database.}
   \item{dbpath}{Name and path to the SOMEC access database.}
-  \item{file_name}{Name of the .xlsx file that contains the appropriate file names.}
-  \item{prefix}{Name of the prefix used to build the id of a mission. The prefix will be pasted to the start date of the mission to build the id (e.g. "HUD")}
+  \item{prefix}{Name of the prefix used to build the id of a mission. The prefix will be pasted to the start date of the mission to build the id (e.g. "HUD").}
+  \item{old}{Logical. \code{TRUE} if raw data file has old names, \code{FALSE} otherwise.}
 %%     ~~Describe \code{x} here~~
 }
 \details{
