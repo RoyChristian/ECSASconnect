@@ -17,9 +17,8 @@ SOMEC2ECSAS(d="SOMEC-QC.accdb",file="outfile.csv",
   \item{d}{Name and path to the Access Quebec SOMEC database}
   \item{file}{Name and path of the .csv file created}
   \item{date}{Cut off date after which the data should be extracted (character, format: "yyyy-mm-dd")}
-  \item{step}{Length of bouts in minutes to cut or join the transects into (default: "5 min"). Original QC data is cut in 1 minute bouts. See the by argument of seq.POSIXt for details on how to specify a value.}
+  \item{step}{Length of bouts in minutes to cut or join the transects into (default: "5 min"). Original QC data is cut in 1 minute bouts. See the by argument of \code{\link{seq.POSIXt}} for details on how to specify a value.}
 %%     ~~Describe \code{x} here~~
-}
 }
 \details{
 %%  ~~ If necessary, more details than the description above ~~
@@ -36,7 +35,7 @@ Francois Rousseu
 \note{
 }
 \seealso{
-%% ~~objects to See Also as \code{\link{help}}, ~~~
+\code{\link{data2SOMEC}}
 }
 \examples{
 }

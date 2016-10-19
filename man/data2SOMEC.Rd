@@ -19,7 +19,6 @@ data2SOMEC(input,dbpath,file_name,prefix)
   \item{prefix}{Name of the prefix used to build the id of a mission. The prefix will be pasted to the start date of the mission to build the id (e.g. "HUD")}
 %%     ~~Describe \code{x} here~~
 }
-}
 \details{
 The new data will be appended to the database, namely to the three tables transects, observations and missions.
 }
@@ -35,7 +34,7 @@ Francois Rousseu
 \note{
 }
 \seealso{
-%% ~~objects to See Also as \code{\link{help}}, ~~~
+\code{\link{new_mission}}, \code{\link{SOMEC2ECSAS}}
 }
 \examples{
 }

@@ -12,7 +12,7 @@ data2SOMEC<-function(
 	### helper functions
 	decim<-function(x){
 		y<-gsub(",",".",gsub("\"|N|o|O|W|N","",x))
-		y<-strsplit(y,"°|'")
+		y<-strsplit(y,"?|'")
 		y<-sapply(y,function(i){
 			if(length(i)>1){
 				i<-as.numeric(i)
@@ -24,13 +24,13 @@ data2SOMEC<-function(
 		if(any(grep("W|w|O|o",x))){
 			y<-(-1)*y
 		}
-		y #à vérifier que tout est bien négatif dans les longitudes
+		y #? v?rifier que tout est bien n?gatif dans les longitudes
 	}
 	
 	fix_date<-function(x){
 		g<-grep("-00",x) 
 		if(any(g)){
-			temp<-cumsum(as.numeric(!duplicated(x))) #on prend la valeur de date précédente qui n'est pas -00
+			temp<-cumsum(as.numeric(!duplicated(x))) #on prend la valeur de date pr?c?dente qui n'est pas -00
 			temp<-temp[match(x,x)]
 			m<-match(temp[g]-1,temp)
 			x[g]<-x[m]
@@ -82,16 +82,16 @@ data2SOMEC<-function(
 	tran<-tran[!is.na(tran$id_transect),]
 	obs<-obs[!is.na(obs$id_transect),]
 	
-	# si pas de longitude on scrap la ligne MAIS À MODIFIER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	# si pas de longitude on scrap la ligne MAIS ? MODIFIER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	tran<-tran[!is.na(tran$longitude),]
 	obs<-obs[!is.na(obs$longitude),]
 	
-	# si pas de données de temps ou de lat lon on stop tout et on donne un message d'erreur
+	# si pas de donn?es de temps ou de lat lon on stop tout et on donne un message d'erreur
 	col<-c("latitude","longitude","date","heure")
 	manque1<-apply(tran[,col],2,function(i){any(is.na(i))})
 	manque2<-apply(obs[,col],2,function(i){any(is.na(i))})
 	if(any(c(manque1,manque2))){
-		stop("Données de latitude/longitude/date/heure manquantes")
+		stop("DonnÃ©es de latitude/longitude/date/heure manquantes")
 	}
 	
 	# Connect to Access db
