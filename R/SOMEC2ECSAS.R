@@ -6,8 +6,8 @@
 
 SOMEC2ECSAS<-function(
 	
-	d="C:/Users/User/Documents/SCF2016_FR/ECSASdata/SOMEC-QC.accdb", # path to the access database
-	file="C:/Users/User/Documents/SCF2016_FR/ECSASdata/outfile.csv", # name of the output file
+	input="SOMEC-QC.accdb", # path to the access database
+	output="ECSASexport.csv", # name of the output file
 	date="2014-01-01", # date after which data has to be uploaded
 	step="5 min" # length of the transect bouts to be cut into
 	
@@ -31,11 +31,11 @@ SOMEC2ECSAS<-function(
 	
 	split_transect<-function(d,step){
 		x2<-d #contient tout
-		g<-grep("deb|déb|fin",d[,"site"],ignore.case=TRUE)
+		g<-grep("deb|dÃ©b|fin",d[,"site"],ignore.case=TRUE)
 		if(length(g)==1){
-			g<-unique(c(max(grep("ini",d[,"site"],ignore.case=TRUE)),g)) #certains transects n'ont pas de début, mais 2 description initiale
+			g<-unique(c(max(grep("ini",d[,"site"],ignore.case=TRUE)),g)) #certains transects n'ont pas de d?but, mais 2 description initiale
 		}
-		x<-d[g,] #contient uniquement le début et la fin
+		x<-d[g,] #contient uniquement le d?but et la fin
 		
 		step_sec<-60*as.numeric(unlist(strsplit(step," "))[1])
 		period<-as.POSIXct(x$date_heure,tz="GMT")
@@ -53,11 +53,11 @@ SOMEC2ECSAS<-function(
 		LatEnd<-val_lat[-1]
 		LongEnd<-val_lon[-1]
 		res<-data.frame(StartTime,EndTime,LatStart,LongStart,LatEnd,LongEnd,stringsAsFactors=FALSE)
-		res[,"WatchIDOrig"]<-paste(x$mission[1],res$StartTime,sep="_") #ID temporaire pour par la suite être transformé
+		res[,"WatchIDOrig"]<-paste(x$mission[1],res$StartTime,sep="_") #ID temporaire pour par la suite ?tre transform?
 		
 		#val<-sapply(res[,"StartTime"],function(j){which.min(abs(as.POSIXct(x2$date_heure,tz="GMT")-j))[1]}) 
 		val<-sapply(res[,"StartTime"],function(j){
-			w<-which(as.POSIXct(x2$date_heure,tz="GMT")<=j) #on donne la valeur précédente la plus près
+			w<-which(as.POSIXct(x2$date_heure,tz="GMT")<=j) #on donne la valeur pr?c?dente la plus pr?s
 			if(any(w)){
 				max(w)
 			}else{
@@ -128,17 +128,18 @@ SOMEC2ECSAS<-function(
 		res[,"CruiseMainObserver"]<-z$observateur1[1]
 		res[,"CruiseNote"]<-NA
 		res[,"CruiseIDOrig"]<-x[,"mission"][1]
-		res<-res[,names(f2)]
+		res<-res[,names(ECSASnames)]
 		res
 	}
 	
-	cat(paste("Reading",d,"database...\n\n",collapse=" "))
-	db<-odbcConnectAccess2007(d)
+	cat(paste("Reading",input,"database...\n\n",collapse=" "))
+	db<-odbcConnectAccess2007(input)
+	on.exit(odbcClose(db))
 	tran<-sqlFetch(db,"transects",stringsAsFactors=FALSE)
 	obs<-sqlFetch(db,"observations",stringsAsFactors=FALSE)
 	mis<-sqlFetch(db,"missions",stringsAsFactors=FALSE)
-	sp<-sqlFetch(db,"Code espèces",stringsAsFactors=FALSE)
-	odbcClose(db)
+	sp<-sqlFetch(db,"Code espÃ¨ces",stringsAsFactors=FALSE)
+	
 	
 	# do it only on new 2014 2015 data (be careful GOR140228 not in new missions to add)
 	tran<-tran[substr(tran$date,1,10)>=date,]
@@ -152,11 +153,9 @@ SOMEC2ECSAS<-function(
 	obs<-obs[!(is.na(obs$latitude) | is.na(obs$longitude)),]
 	obs<-with(obs,obs[order(mission,id_transect,date,heure),])
 	
-	# temporary file to get end names
-	file2<-"C:/Users/User/Documents/SCF2016_FR/ECSASconnect/Example input data.xls"
-	sheets<-excel_sheets(file2)
-	f2 <- read_excel(file2,sheet=sheets[1]) 
-	
+	# get ordered names
+	data(ECSASnames)
+
 	l<-dlply(tran,.(mission,id_transect))
 	cat(paste("Splitting",length(l),"transects\n\n",collapse=" "))
 	l<-lapply(l,split_transect,step=step)
@@ -175,7 +174,7 @@ SOMEC2ECSAS<-function(
 	ans[,"FlySwim"]<-ifelse(ans[,"FlySwim"]%in%c("EAU","Eau","Sur l'eau","eau"),"W",ans[,"FlySwim"])
 	ans[,"FlySwim"]<-ifelse(ans[,"FlySwim"]%in%c("VOL","Vol","vol"),"F",ans[,"FlySwim"])
 	ans[,"InTransect"]<-ifelse(ans[,"InTransect"]%in%c("En cours"),"Y",ifelse(!is.na(ans[,"InTransect"]),"N",ans[,"InTransect"]))
-	ans[,"PlatformActivity"]<-ifelse(ans[,"PlatformActivity"]%in%c("EnDéplacement"),"Steaming",ans[,"PlatformActivity"])
+	ans[,"PlatformActivity"]<-ifelse(ans[,"PlatformActivity"]%in%c("EnDÃ©placement"),"Steaming",ans[,"PlatformActivity"])
 	
 	if(any(is.na(ans[,"Alpha"]))){
 		cat("No matches for following Alpha codes:",paste(unique(CodeFR[is.na(ans[,"Alpha"])]),collapse=" "),"\n")
@@ -199,8 +198,8 @@ SOMEC2ECSAS<-function(
 	#write.csv(ans,paste0(getwd(),"/test.csv"))
 	cat("Showing first 6 lines of output data:\n\n\n")
 	head(ans)
-	cat(paste("Writing outfile","\"",file,"\"","to",collapse=" "))
-	write.table(ans,file,row.names=FALSE,sep=";",na="")
+	cat(paste("Writing outfile","\"",output,"\"","to",collapse=" "))
+	write.table(ans,output,row.names=FALSE,sep=";",na="")
 	ans
 	
 }
