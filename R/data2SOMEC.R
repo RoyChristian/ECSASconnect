@@ -12,7 +12,7 @@ data2SOMEC<-function(
 	### helper functions
 	decim<-function(x){
 		y<-gsub(",",".",gsub("\"|N|o|O|W|N","",x))
-		y<-strsplit(y,"?|'")
+		y<-strsplit(y,"°|'")
 		y<-sapply(y,function(i){
 			if(length(i)>1){
 				i<-as.numeric(i)
@@ -103,6 +103,12 @@ data2SOMEC<-function(
 	Mis<-sqlFetch(db,"missions")
 	#odbcClose(db)
 	
+	### Mission info
+	nom_plateforme<-if(any(names(tran)=="nom_plateforme")){tran[,"nom_plateforme"][1]}else{NA}
+	type_transect<-NA
+	format_transect<-NA
+	organisation<-if(any(names(tran)=="organisation")){tran[,"organisation"][1]}else{NA}
+	
 	
 	### transects
 	tran[,"mission"]<-paste0(prefix,codify_date(min(tran[,"date"],na.rm=TRUE)))
@@ -112,22 +118,6 @@ data2SOMEC<-function(
 	tran[,"date_heure"]<-paste(tran[,"date"],tran[,"heure"])
 	tran[,"heure"]<-paste("1899-12-30",tran[,"heure"])
 	tran[,"instantane"]<-as.numeric(gsub(" sec","",gsub("Non","999",tran[,"instantane"])))
-	tran<-tran[,names(Tran)]
-	
-	if(any(Tran$mission==tran$mission[1])){
-		stop(paste("Mission name",tran$mission[1],"already in the database"))
-	}
-	
-	varTypes<-get_dbvarTypes(db,"transects")
-	wd<-which(varTypes=="double")
-	for(i in seq_along(wd)){
-		tran[,names(wd)[i]]<-as.numeric(gsub(",",".",tran[,names(wd)[i]]))
-	}
-	
-	sqlSave(db,tran,tablename="transects",append=TRUE,rownames=FALSE,addPK=FALSE,fast=TRUE,colnames=FALSE,varTypes=varTypes)
-	cat(paste(nrow(tran),"lines added to the transects table"),"\n")
-	
-	
 	
 	### observations
 	obs[,"mission"]<-tran[,"mission"][1]
@@ -138,24 +128,60 @@ data2SOMEC<-function(
 	obs[,"heure"]<-paste("1899-12-30",obs[,"heure"])
 	obs[,"nb_individu"]<-as.numeric(obs[,"nb_individu"]) #parfois il y a des lettres dans les valeurs (e.g. ligne 1215 dans HudsonJuin2014)
 	obs[,"id"]<-as.integer(seq(range(Obs[,"id"])[2]+1,length.out=nrow(obs)))
-	obs<-obs[,names(Obs)]
 	
+	if(any(Tran$mission==tran$mission[1])){
+		 stop(paste("Mission name",tran$mission[1],"already in the database"))
+	}
+	
+	difftran<-setdiff(names(Tran),names(tran)) #on regarde ce qU,on peut aller cherche comme information manquante dans l'autre table
+	diffobs<-setdiff(names(Obs),names(obs))
+	int<-intersect(diffobs,names(tran))
+	
+	
+	if(length(int)>0){    #on rajoute ce qui manque d'important dans la table des observations (en 2016 le code_obs et cote_obs s'il y a plus d'une valeur on ne sait pas trop comment attribuer et plus compliqué
+	  for(i in seq_along(int)){ 
+	    r<-unique(tran[,int[i]])
+	    r<-r[!is.na(r)]
+	    if(length(r)==1){
+	      obs[,int[i]]<-r
+	    }else{
+	      obs[,int[i]]<-NA
+	    }
+	  }
+	}
+	
+
+	if(length(difftran)){
+	  tran[,difftran]<-NA	
+	  warning(paste("Added empty columns (",paste(difftran,collapse=", "),") to transects table to fit with",input))
+	}
+
+	varTypes<-get_dbvarTypes(db,"transects")
+	wd<-which(varTypes=="double")
+	for(i in seq_along(wd)){
+		tran[,names(wd)[i]]<-as.numeric(gsub(",",".",tran[,names(wd)[i]]))
+	}
+	
+	tran<-tran[,names(Tran)]
+	sqlSave(db,tran,tablename="transects",append=TRUE,rownames=FALSE,addPK=FALSE,fast=TRUE,colnames=FALSE,varTypes=varTypes)
+	cat(paste(nrow(tran),"lines added to the transects table"),"\n")
+	
+	if(length(diffobs)){
+		obs[,diffobs]<-NA	
+		warning(paste("Added empty columns (",paste(diffobs,collapse=", "),") to observations table to fit with",input))
+	}
+
 	varTypes<-get_dbvarTypes(db,"observations")
 	wd<-which(varTypes=="double")
 	for(i in seq_along(wd)){
 		obs[,names(wd)[i]]<-as.numeric(gsub(",",".",obs[,names(wd)[i]]))
 	}
-	
+	obs<-obs[,names(Obs)]
 	sqlSave(db,obs,tablename="observations",append=TRUE,rownames=FALSE,addPK=FALSE,fast=TRUE,colnames=FALSE,varTypes=varTypes)
 	cat(paste(nrow(obs),"lines added to the observations table"),"\n")
 	
 
 	### missions
-	nom_plateforme<-NA
-	type_transect<-NA
-	format_transect<-NA
-	organisation<-NA
-	
 	mission<-tran[,"mission"][1]
 	debut<-range(obs[,"date"])[1]
 	fin<-range(obs[,"date"])[2]
