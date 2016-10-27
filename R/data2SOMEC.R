@@ -59,7 +59,7 @@ data2SOMEC<-function(
 									VARCHAR=as.character(x),
 									DOUBLE=as.numeric(x),
 									DATETIME=as.character(x),
-									INTEGER=as.numeric(x)
+									INTEGER=as.numeric(x),
 		)
 	}
 	
@@ -98,9 +98,9 @@ data2SOMEC<-function(
 	# Connect to Access db
 	db<-odbcConnectAccess2007(dbpath)
 	on.exit(odbcClose(db))
-	Tran<-sqlFetch(db,"transects")
-	Obs<-sqlFetch(db,"observations")
-	Mis<-sqlFetch(db,"missions")
+	Tran<-sqlFetch(db,"transects",stringsAsFactors=FALSE)
+	Obs<-sqlFetch(db,"observations",stringsAsFactors=FALSE)
+	Mis<-sqlFetch(db,"missions",stringsAsFactors=FALSE)
 	#odbcClose(db)
 	
 	### Mission info
@@ -178,6 +178,16 @@ data2SOMEC<-function(
 		obs[,names(wd)[i]]<-as.numeric(gsub(",",".",obs[,names(wd)[i]]))
 	}
 	obs<-obs[,names(Obs)]
+	
+
+	### Convert column type in obs to fit with access
+	cl<-sapply(Obs,class)
+	cl<-sapply(seq_along(cl),function(i){ifelse(length(cl[[i]])==1,cl[[i]],"character")})
+	w<-which(sapply(obs,class)!=cl)
+	for(i in w){
+	  obs[,i]<-eval(parse(text=paste0("as.",cl[i],"(obs[,i])")))
+	}
+	
 	sqlSave(db,obs,tablename="observations",append=TRUE,rownames=FALSE,addPK=FALSE,fast=TRUE,colnames=FALSE,varTypes=varTypes)
 	cat(paste(nrow(obs),"lines added to the observations table"),"\n")
 	
