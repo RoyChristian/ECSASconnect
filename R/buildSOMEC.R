@@ -8,14 +8,14 @@ buildSOMEC<-function(
 
   ### get new column names
   #names <- read_excel("C:/Users/User/Documents/SCF2016_FR/ECSASconnect/noms_colonnes_SOMEC-QC.xlsx") 
-  names<-data(new_names)
-  namesT<-names[names[,"table"]=="transects",]
-  namesO<-names[names[,"table"]=="observations",]
-  namesM<-names[names[,"table"]=="missions",]
+  data(new_names)
+  namesT<-new_names[new_names[,"table"]=="transects",]
+  namesO<-new_names[new_names[,"table"]=="observations",]
+  namesM<-new_names[new_names[,"table"]=="missions",]
 
   ### Connect to access old backup database
   db_old <- odbcConnectAccess2007(input)
-  on.exit(odbcClose(db_old))
+  on.exit(odbcCloseAll())
   transects<-sqlFetch(db_old,"Transect",as.is=TRUE)
   observations<-sqlFetch(db_old,"OBSERVATION",as.is=TRUE)
   missions<-sqlFetch(db_old,"Mission",as.is=TRUE)
@@ -40,7 +40,7 @@ buildSOMEC<-function(
 
   ### connect to new database (use a copy from the backup and delete the three tables (Transect, OBSERVATION, Mission) from the copy after the update at the end)
   db <- odbcConnectAccess2007(paste0(path,"/SOMEC.accdb"))
-  on.exit(odbcClose(db))
+  on.exit(odbcCloseAll())
   
   # export new transects table
   tmp<-sqlColumns(db, "Transect")
@@ -61,7 +61,7 @@ buildSOMEC<-function(
   sqlSave(db,missions,tablename=NULL,append=TRUE,rownames=FALSE,addPK=FALSE,fast=TRUE,colnames=FALSE,varTypes=varTypes)
   
   # export column names information from old database and raw data
-  codes_colonnes<-names
+  codes_colonnes<-new_names
   sqlSave(db,codes_colonnes,tablename=NULL,rownames=FALSE,addPK=FALSE,fast=TRUE,colnames=FALSE)
 
   # drop old tables
@@ -70,7 +70,8 @@ buildSOMEC<-function(
     sqlDrop(db,"OBSERVATION")
     sqlDrop(db,"Mission")
   }
-codes}
+  
+}
 
 
 
