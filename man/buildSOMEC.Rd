@@ -19,13 +19,10 @@ Makes a copy of the old database and then adds 4 new tables (transects, observat
 \value{
 An access database.
 }
-
 \author{
 Francois Rousseu
 }
-
-
 \seealso{
-\link{\code{data2SOMEC}}
+\code{\link{data2SOMEC}}
 }
 

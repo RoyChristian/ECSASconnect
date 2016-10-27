@@ -34,7 +34,7 @@ Francois Rousseu
 \note{
 }
 \seealso{
-\code{\link{new_mission}}, \code{\link{SOMEC2ECSAS}}
+\code{\link{new_mission}}, \code{\link{SOMEC2ECSAS}}, \code{\link{buildSOMEC}}
 }
 \examples{
 }
