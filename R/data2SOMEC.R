@@ -148,6 +148,7 @@ data2SOMEC<-function(
 	      obs[,int[i]]<-NA
 	    }
 	  }
+	  diffobs<-diffobs[!diffobs%in%int]
 	}
 	
 
