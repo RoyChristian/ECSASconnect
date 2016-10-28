@@ -9,7 +9,7 @@ Export QC data to the ECSAS database.
 Creates a .csv file used for exporting the data from the QC SOMEC database to the ECSAS database.
 }
 \usage{
-SOMEC2ECSAS(d="SOMEC-QC.accdb",output="outfile.csv",
+SOMEC2ECSAS(input="SOMEC.accdb",output="ECSASexport.csv",
             date="2014-01-01",step="5 min")
 }
 %- maybe also 'usage' for other objects documented here.

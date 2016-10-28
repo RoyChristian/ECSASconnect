@@ -6,7 +6,7 @@
 
 SOMEC2ECSAS<-function(
 	
-	input="SOMEC-QC.accdb", # path to the access database
+	input="SOMEC.accdb", # path to the access database
 	output="ECSASexport.csv", # name of the output file
 	date="2014-01-01", # date after which data has to be uploaded
 	step="5 min" # length of the transect bouts to be cut into
