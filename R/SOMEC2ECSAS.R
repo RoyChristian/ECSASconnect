@@ -200,6 +200,7 @@ SOMEC2ECSAS<-function(
 	head(ans)
 	cat(paste("Writing outfile","\"",output,"\"","to",collapse=" "))
 	write.table(ans,output,row.names=FALSE,sep=";",na="")
+	ans$Distance<-ifelse(is.na(ans$Distance),"",ans$Distance)
 	ans
 	
 }
