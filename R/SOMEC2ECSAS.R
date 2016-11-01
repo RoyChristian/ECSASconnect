@@ -9,7 +9,8 @@ SOMEC2ECSAS<-function(
 	input="SOMEC.accdb", # path to the access database
 	output="ECSASexport.csv", # name of the output file
 	date="2014-01-01", # date after which data has to be uploaded
-	step="5 min" # length of the transect bouts to be cut into
+	step="5 min", # length of the transect bouts to be cut into
+	spNA=TRUE
 	
 ){
 	
@@ -168,7 +169,8 @@ SOMEC2ECSAS<-function(
 	ans[,"SightingIDOrig"]<-1:nrow(ans)
 	ans[,"Alpha"]<-toupper(ans[,"Alpha"])
 	CodeFR<-ans[,"Alpha"]
-	ans[,"Alpha"]<-sp$CodeAN[match(ans[,"Alpha"],sp$CodeFR)]
+	m<-match(ans[,"Alpha"],sp$CodeFR)
+	ans[,"Alpha"]<-sp$CodeAN[m]
 	ans[,"Alpha"]<-ifelse(ans[,"Alpha"]%in%c("NOBI","RIEN"),"",ans[,"Alpha"])
 	ans[,"Distance"]<-toupper(ans$Distance)
 	ans[,"FlySwim"]<-ifelse(ans[,"FlySwim"]%in%c("EAU","Eau","Sur l'eau","eau"),"W",ans[,"FlySwim"])
@@ -177,7 +179,10 @@ SOMEC2ECSAS<-function(
 	ans[,"PlatformActivity"]<-ifelse(ans[,"PlatformActivity"]%in%c("EnDéplacement"),"Steaming",ans[,"PlatformActivity"])
 	
 	if(any(is.na(ans[,"Alpha"]))){
-		cat("No matches for following Alpha codes:",paste(unique(CodeFR[is.na(ans[,"Alpha"])]),collapse=" "),"\n")
+		 cat("No matches for following Alpha codes:",paste(unique(CodeFR[is.na(ans[,"Alpha"])]),collapse=" "),"\n")
+		 if(!spNA){
+			  ans[,"Alpha"]<-ifelse(is.na(m),CodeFR,ans[,"Alpha"])
+		 }
 	}
 	
 	ans<-ddply(ans,.(CruiseIDOrig,WatchIDOrig),function(k){k[rev(order(k$Alpha)),]})  # reorder to elimnate empty observations when there are already observations.
