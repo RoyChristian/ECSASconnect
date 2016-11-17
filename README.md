@@ -36,3 +36,11 @@ Version 0.5.0
 Version 0.4.0
 =======
 * Imported files on Github
+
+##TODO LIST
+
+- Change `ECSAS.extract` code argument to select all species by default and not having to give a complete species list. The problem is that if you give one code that is not there, the function stops. 
+
+
+
+
