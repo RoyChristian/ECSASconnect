@@ -5,6 +5,7 @@ Import data from the Eastern Canada Seabirds at Sea (ECSAS) database
 Version 0.6.2
 =======
 * Added several new functions for importing new data to the QC SOMEC access database and exporting this data to the ECSAS database. 
+* Added the possibility to extract all or some databases from ECSAS.
 
 Version 0.6.1
 =======
