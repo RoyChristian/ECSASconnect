@@ -39,7 +39,7 @@ new_mission<-function(
       names<-new_names
     }
     sapply(sheets,function(i){
-      n<-names[names$table==i,"new_name"]
+      n<-unique(names[names$table==i,"new_name"]) #take out duplicates because of multiple names
       f<-as.data.frame(matrix(rep(NA,length(n)),ncol=length(n)))
       names(f)<-n
       write.xlsx(f,paste0(path,"/",output,".xlsx"),sheetName=i,showNA=FALSE,append=TRUE,row.names=FALSE)
