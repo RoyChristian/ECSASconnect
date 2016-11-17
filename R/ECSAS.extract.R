@@ -22,12 +22,16 @@
 
 ECSAS.extract <-
   function(sp="ATPU",  years=c(2006,2013), lat=c(30,70), long=c(-70, -30), Obs.keep=NA, Obs.exclude=NA, 
-           database=c("Atlantic","Quebec","Both","All"), snapshot=T, intransect=T, 
+           database=c("All","Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS"), snapshot=T, intransect=T, 
            ecsas.drive="C:/Users/christian/Dropbox/ECSAS", 
            ecsas.file="Master ECSAS_backend v 3.31.mdb"){
     
-    ###Make sure arguments works
-    database<- match.arg(database)
+    ###Make sure arguments works with databases
+    dbnames<-c("Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS")
+    if(any(is.na(match(database,c(dbnames,"All"))))){
+       stop(paste("Some names not matching",paste(dbnames,collapse=" "),"or All"))  
+    }
+    database<- match.arg(database,several.ok=TRUE) #Not sure how to make it check for all argument names
     
     ###setwd and open connection  
     wd<-getwd()
@@ -72,21 +76,14 @@ ECSAS.extract <-
     lat.selection <-  paste("WHERE (((tblWatch.LatStart)>=",lat[1]," And (tblWatch.LatStart)<=",lat[2],")",sep="")  
     long.selection <- paste("AND ((tblWatch.LongStart)>=",long[1]," And (tblWatch.LongStart)<=",long[2],")",sep="")  
     
-    
-    #write SQL selection for the different type of cruise
-    if(database=="Atlantic"){
-      selected.database <- "AND ((tblCruise.Atlantic)=TRUE)"
+    #write SQL selection for the different type of databases
+    if(any(database=="All")){
+      db<-dbnames
     }else{
-      if(database=="Quebec"){
-        selected.database <- "AND ((tblCruise.Quebec)=TRUE)"
-      }else{
-        if(database=="Both"){
-          selected.database <- "AND ((tblCruise.Atlantic)=TRUE) OR ((tblCruise.Quebec)=TRUE)"
-        }else{
-          selected.database <- ""
-        }}}
-    
-    
+      db<-database
+    }
+    selected.database <- paste0("AND (",paste0(paste0("(tblCruise.",db,")=TRUE"),collapse=" OR "),")") 
+   
     #write SQL selection for year
     year.selection <- paste("AND ((DatePart('yyyy',[Date]))Between ",years[1]," And ",years[2],"))",sep="")  
     
@@ -187,6 +184,10 @@ ECSAS.extract <-
                                   "tblWatch.Glare", 
                                   "tblCruise.Atlantic", 
                                   "tblCruise.Quebec", 
+                                  "tblCruise.Arctic",
+                                  "tblCruise.ESRF",
+                                  "tblCruise.AZMP",
+                                  "tblCruise.FSRS",
                                   "DatePart('yyyy',[Date]) AS [Year]",
                                   "DatePart('m',[Date]) AS [Month]",
                                   "DatePart('ww',[Date]) AS Week",
@@ -226,7 +227,7 @@ ECSAS.extract <-
     #merge and filter the tables for the watches 
     Watches2 <- join(join(join(watches, observer, by="ObserverID"),
                           platform.name, by="PlatformID", type="left"),
-                     platform.activity,by="PlatformTypeID",type="left") [,c("CruiseID","Atlantic","Quebec", "StartDate",
+                     platform.activity,by="PlatformTypeID",type="left") [,c("CruiseID","Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS","StartDate",
                                                                             "EndDate","WatchID","ObserverName","Date","Year","Month","Week","Day","StartTime",
                                                                             "EndTime", "LatStart","LongStart", "WatchLenKm", "Snapshot","Experience",
                                                                             "PlatformName","PlatformType", "Visibility","SeaState","Swell","Weather","Glare")]

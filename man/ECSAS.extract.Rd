@@ -6,7 +6,7 @@
 \usage{
 ECSAS.extract(sp = "ATPU", years = c(2006, 2013), lat = c(30, 70),
   long = c(-70, -30), Obs.keep = NA, Obs.exclude = NA,
-  database = c("Atlantic", "Quebec", "Both"), snapshot = T,
+  database = c("All", "Atlantic", "Quebec", "Arctic", "ESRF", "AZMP", "FSRS"), snapshot = T,
   intransect = T, ecsas.drive = "C:/Users/christian/Dropbox/ECSAS",
   ecsas.file = "Master ECSAS_backend v 3.31.mdb")
 }
@@ -21,7 +21,7 @@ ECSAS.extract(sp = "ATPU", years = c(2006, 2013), lat = c(30, 70),
 
 \item{Obs.exclude}{Name of the observer to exlude for the extraction.The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").}
 
-\item{database}{From which database the extraction must be made. Currently restricted to Atlantic and/or Quebec.}
+\item{database}{From which databases the extraction must be made. When \code{database = "All"}, all data will be extracted. Otherwise, a character vector of the names of the desired database has to be given. When "All" is included, all data is extracted. See arguments for the list of possible databases.}
 
 \item{snapshot}{Should we keep only the birds counted during the snapshot or not}
 
