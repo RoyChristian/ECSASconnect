@@ -4,7 +4,7 @@ Import data from the Eastern Canada Seabirds at Sea (ECSAS) database
 
 **For CWS computers, Java must be installed from the allowed program first for necessary package rJava to work.**
 
-**For InGeo computers, set the path to Java in the ArcGIS folder for rJava to work:**
+**For InGeo computers, set the path to Java in the ArcGIS folder for rJava to work. When loading ECSASconnect, it seems that it may be neccessary to reset the JAVA_HOME variable before loading the package even if rJava is working. Mysterious...**
 
 `Sys.setenv(JAVA_HOME = "C:/Program Files (x86)/ArcGIS/Desktop10.2/java/jre")`
 
