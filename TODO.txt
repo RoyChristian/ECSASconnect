@@ -1,0 +1,2 @@
+- fix snapshot option
+- get rid of need to specify the species.
