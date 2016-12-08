@@ -19,12 +19,23 @@
 #'
 #'@seealso \code{\link{QC.extract}}
 
-
 ECSAS.extract <-  function(species,  years=c(2006,2013), lat=c(-90,90), long=c(-180, 180), Obs.keep=NA, Obs.exclude=NA,
            database=c("Atlantic","Quebec","Both","All"), intransect=T, distMeth = 14,
            ecsas.drive="C:/Users/christian/Dropbox/ECSAS",
            ecsas.file="Master ECSAS_backend v 3.31.mdb"){
 
+# debugging
+# years <- c(1800,2017)
+# lat <- c(39.33489,74.65058)
+# long  <- c(-90.50775,-38.75887)
+# database  <-  "Atlantic"
+# ecsas.drive  <-  pathECSAS
+# ecsas.file  <-  fileECSAS
+# intransect <- T
+# distMeth <- 14
+
+  
+  
   ###Make sure arguments works
   database<- match.arg(database)
 
@@ -253,12 +264,16 @@ ECSAS.extract <-  function(species,  years=c(2006,2013), lat=c(-90,90), long=c(-
   observer <- sqlFetch(channel1, "lkpObserver")
   platform.name <- sqlFetch(channel1, "lkpPlatform")
   platform.activity <- sqlFetch(channel1, "lkpPlatformType")
+  seastates <- sqlFetch(channel1, "lkpSeastate")
   #close connection
   odbcCloseAll()
 
   #name change for the second column
   names(platform.name)[2] <- "PlatformName"
 
+  # rename to do matching on seastates below. 
+  watches <- rename(watches, c("SeaState" = "SeaStateID"))
+  
   #merge and filter the tables for the sigthings
   Sighting2 <- join(join(Sighting,specieInfo,by="SpecInfoID",type="left"),
                     distance,by="DistanceCode") [,c("FlockID", "WatchID","Alpha","English","Latin","Class",
@@ -266,8 +281,10 @@ ECSAS.extract <-  function(species,  years=c(2006,2013), lat=c(-90,90), long=c(-
                                                     "InTransect","Association", "Behaviour","FlightDir","FlySwim",
                                                     "Count","Age","Plumage","Sex")]
 
+  
+  
   #merge and filter the tables for the watches
-  Watches2 <- join(join(join(watches, observer, by="ObserverID"),
+  Watches2 <- join(join(join(join(watches, seastates, by="SeaStateID", type = "left"), observer, by="ObserverID"),
                         platform.name, by="PlatformID", type="left"),
                    platform.activity,by="PlatformTypeID",type="left") [,c("CruiseID","Program", "Atlantic","Quebec", "StartDate",
                                                                           "EndDate","WatchID","DistMeth", "ObserverName","Date","Year","Month","Week","Day","StartTime",
