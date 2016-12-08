@@ -46,11 +46,6 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), Ob
   setwd(ecsas.drive)
   channel1 <- odbcConnectAccess(ecsas.file, uid="")
 
-  #Make sure the temp table doesn't exist
-  if("tblspselect"%in%sqlTables(channel1)$TABLE_NAME){
-    sqlDrop(channel1, "tblspselect")
-  }
-
   # generic where-clause start and end. "1=1" is a valid expression that does nothing but is syntactically
   # correct in case there are no other where conditions.
   where.start <-  "WHERE ((1=1)"
