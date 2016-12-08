@@ -8,7 +8,7 @@
 #'@param long Pairs of coordinate giving the western and eastern limits of the range desired. Note that longitude values must be negative.
 #'@param obs.keep Name of the observer to keep for the extraction. The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").
 #'@param Obs.exclude Name of the observer to exlude for the extraction.The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").
-#'@param database From which database the extraction must be made. Options are Quebec, Atlantic, both regions or all the observations. All the observations will inlcude the observations made in the PIROP program.
+#'@param sub.program From which sub.program the extraction must be made. Options are Quebec, Atlantic, both regions or all the observations. All the observations will inlcude the observations made in the PIROP program.
 #'@param intransect Should we keep only the birds counted on the transect or not.
 #'@param distMeth Integer specifying the distance sampling method code (tblWatch.DistMeth in ECSAS). Default is 14 (Perpendicular distanes for both flying and swimming birds).
 #'@param ecsas.drive Where is located the ECSAS Access database
@@ -20,7 +20,7 @@
 #'@seealso \code{\link{QC.extract}}
 
 ECSAS.extract <-  function(species,  years=c(2006,2013), lat=c(-90,90), long=c(-180, 180), Obs.keep=NA, Obs.exclude=NA,
-           database=c("Atlantic","Quebec","Both","All"), intransect=T, distMeth = 14,
+           sub.program=c("Atlantic","Quebec","Both","All"), intransect=T, distMeth = 14,
            ecsas.drive="C:/Users/christian/Dropbox/ECSAS",
            ecsas.file="Master ECSAS_backend v 3.31.mdb"){
 
@@ -28,16 +28,14 @@ ECSAS.extract <-  function(species,  years=c(2006,2013), lat=c(-90,90), long=c(-
 # years <- c(1800,2017)
 # lat <- c(39.33489,74.65058)
 # long  <- c(-90.50775,-38.75887)
-# database  <-  "Atlantic"
+# sub.program  <-  "Atlantic"
 # ecsas.drive  <-  pathECSAS
 # ecsas.file  <-  fileECSAS
 # intransect <- T
 # distMeth <- 14
-
-  
   
   ###Make sure arguments works
-  database<- match.arg(database)
+  sub.program<- match.arg(sub.program)
 
   ###setwd and open connection
   wd<-getwd()
@@ -78,16 +76,16 @@ ECSAS.extract <-  function(species,  years=c(2006,2013), lat=c(-90,90), long=c(-
   distMeth.selection <- paste0("AND ((tblWatch.DistMeth)=", distMeth, ")")
 
   #write SQL selection for the different type of cruise
-  if(database=="Atlantic"){
-    selected.database <- "AND ((tblCruise.Atlantic)=TRUE)"
+  if(sub.program=="Atlantic"){
+    selected.sub.program <- "AND ((tblCruise.Atlantic)=TRUE)"
   }else{
-    if(database=="Quebec"){
-      selected.database <- "AND ((tblCruise.Quebec)=TRUE)"
+    if(sub.program=="Quebec"){
+      selected.sub.program <- "AND ((tblCruise.Quebec)=TRUE)"
     }else{
-      if(database=="Both"){
-        selected.database <- "AND ((tblCruise.Atlantic)=TRUE) OR ((tblCruise.Quebec)=TRUE)"
+      if(sub.program=="Both"){
+        selected.sub.program <- "AND ((tblCruise.Atlantic)=TRUE) OR ((tblCruise.Quebec)=TRUE)"
       }else{
-        selected.database <- ""
+        selected.sub.program <- ""
       }}}
 
 
@@ -251,7 +249,7 @@ ECSAS.extract <-  function(species,  years=c(2006,2013), lat=c(-90,90), long=c(-
                                 long.selection,
                                 #"AND ((([PlatformSpeed]*[ObsLen]/60*1.852)) Is Not Null And (([PlatformSpeed]*[ObsLen]/60*1.852))>0)",
                                 distMeth.selection,
-                                selected.database,
+                                selected.sub.program,
                                 year.selection,
                                 sep=" "),
                           sep=" ")
