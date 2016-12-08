@@ -3,7 +3,7 @@
 #'
 #'@description The function will connect to the Access database, create a series of queries and import the desired information in a data frame.
 #'@param species Optional Alpha code for the species desired in the extraction. If more than one species all the desired species must be saved into a vector ex: c("COMU,"TBMU", "UNMU")
-#'@param years Years desired for the extraction
+#'@param years Optional. Either a single year or a vector of two years denoting "from" and "to" (inclusive).
 #'@param lat Pairs of coordinate giving the southern and northern limits of the range desired.
 #'@param long Pairs of coordinate giving the western and eastern limits of the range desired. Note that longitude values must be negative.
 #'@param obs.keep Name of the observer to keep for the extraction. The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").
@@ -19,21 +19,24 @@
 #'
 #'@seealso \code{\link{QC.extract}}
 
-ECSAS.extract <-  function(species,  years=c(2006,2013), lat=c(-90,90), long=c(-180, 180), Obs.keep=NA, Obs.exclude=NA,
+ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), Obs.keep=NA, Obs.exclude=NA,
            sub.program=c("Atlantic","Quebec","Both","All"), intransect=T, distMeth = 14,
            ecsas.drive="C:/Users/christian/Dropbox/ECSAS",
            ecsas.file="Master ECSAS_backend v 3.31.mdb"){
 
 # debugging
-years <- c(2016)
-lat <- c(39.33489,74.65058)
-long  <- c(-90.50775,-38.75887)
-sub.program  <-  "Atlantic"
-ecsas.drive  <-  pathECSAS
-ecsas.file  <-  fileECSAS
-intransect <- T
-distMeth <- 14
-species <- "ATPU"  
+# rm(list=ls())
+# years <- c(2016)
+# lat <- c(39.33489,74.65058)
+# long <- c(-90.50775,-38.75887)
+# sub.program <- "Atlantic"
+# ecsas.drive <- "C:/Users/fifieldd/Documents/Offline/R/ECSAS connect/Test"
+# ecsas.file <- "Master ECSAS v 3.51.mdb"
+# intransect <- T
+# distMeth <- 14
+# species <- c("ATPU")
+# Obs.exclude <- NA
+# Obs.keep <- NA
 
   ###Make sure arguments works
   sub.program<- match.arg(sub.program)
@@ -43,34 +46,25 @@ species <- "ATPU"
   setwd(ecsas.drive)
   channel1 <- odbcConnectAccess(ecsas.file, uid="")
 
-  ##correction for year=1
-  ## currently a hack
-  ## we need to year to make the query work I add the year before to the extraction and delete it
-  hack.year=FALSE
-  if(length(years)==1){
-    years <- c(years-1,years)
-    hack.year=TRUE
-  }
-  ##alternative way to include only one year
-  if(years[1]==years[2]){
-    years[1] <- years[2]-1
-    hack.year=TRUE
-  }
-
   #Make sure the temp table doesn't exist
   if("tblspselect"%in%sqlTables(channel1)$TABLE_NAME){
     sqlDrop(channel1, "tblspselect")
   }
 
+  # generic where-clause start and end. "1=1" is a valid expression that does nothing but is syntactically
+  # correct in case there are no other where conditions.
+  where.start <-  "WHERE ((1=1)"
+  where.end <- ")"
+  
   #Write SQL selection for intransect birds
   if(intransect){
-    intransect.selection=paste("AND ((tblSighting.InTransect)=True)")
+    intransect.selection <- "AND ((tblSighting.InTransect)=True)"
   }else{
-    intransect.selection=paste(")")
+    intransect.selection <- ""
   }
 
   #write SQL selection for latitude and longitude
-  lat.selection <-  paste("WHERE (((tblWatch.LatStart)>=",lat[1]," And (tblWatch.LatStart)<=",lat[2],")",sep="")
+  lat.selection <-  paste("AND ((tblWatch.LatStart)>=",lat[1]," And (tblWatch.LatStart)<=",lat[2],")",sep="")
   long.selection <- paste("AND ((tblWatch.LongStart)>=",long[1]," And (tblWatch.LongStart)<=",long[2],")",sep="")
 
   # SQL for distMeth
@@ -89,10 +83,18 @@ species <- "ATPU"
         selected.sub.program <- ""
       }}}
 
-
   #write SQL selection for year
-  year.selection <- paste("AND ((DatePart('yyyy',[Date]))Between ",years[1]," And ",years[2],"))",sep="")
-
+  if (!missing(years)) {
+    if(length(years) == 1)
+      year.selection <- paste0("AND ((DatePart('yyyy',[Date])) = ", years, ")")
+    else if (length(years) == 2)
+      year.selection <- paste0("AND ((DatePart('yyyy',[Date]))Between ",years[1]," And ",years[2],")")
+    else
+      stop("Years must be either a single number or a vector of two numbers.")
+  } else { 
+    year.selection <- ""
+  }
+  
   # handle species specification
   if (!missing(species)) {
     ###Make sure that species is in capital letters
@@ -161,11 +163,13 @@ species <- "ATPU"
                                  "tblWatch.Date", sep=", "),
                            paste("FROM tblWatch",
                                  "INNER JOIN tblSighting ON tblWatch.WatchID = tblSighting.WatchID", sep=" "),
-                           paste(lat.selection,
+                           paste(where.start, 
+                                 lat.selection,
                                  long.selection,
                                  sp.selection2,
                                  intransect.selection,
                                  year.selection,
+                                 where.end,
                                  sep=" "))
 
   } else { # no species was specified, so just get them all
@@ -206,11 +210,13 @@ species <- "ATPU"
                                  "tblWatch.Date", sep=", "),
                            paste("FROM tblWatch",
                                  "INNER JOIN tblSighting ON tblWatch.WatchID = tblSighting.WatchID", sep=" "),
-                           paste(lat.selection,
+                           paste(where.start,
+                                 lat.selection,
                                  long.selection,
                                  intransect.selection,
                                  distMeth.selection,
                                  year.selection,
+                                 where.end,
                                  sep=" "))
   }
 
@@ -246,12 +252,14 @@ species <- "ATPU"
                                 "DatePart('ww',[Date]) AS Week",
                                 "DatePart('y',[Date]) AS [Day]", sep=", "),
                           "FROM tblCruise INNER JOIN tblWatch ON tblCruise.CruiseID = tblWatch.CruiseID",
-                          paste(lat.selection,
+                          paste(where.start,
+                                lat.selection,
                                 long.selection,
                                 #"AND ((([PlatformSpeed]*[ObsLen]/60*1.852)) Is Not Null And (([PlatformSpeed]*[ObsLen]/60*1.852))>0)",
                                 distMeth.selection,
                                 selected.sub.program,
                                 year.selection,
+                                where.end,
                                 sep=" "),
                           sep=" ")
 
