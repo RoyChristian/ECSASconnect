@@ -25,15 +25,16 @@ ECSAS.extract <-  function(species,  years=c(2006,2013), lat=c(-90,90), long=c(-
            ecsas.file="Master ECSAS_backend v 3.31.mdb"){
 
 # debugging
-# years <- c(1800,2017)
-# lat <- c(39.33489,74.65058)
-# long  <- c(-90.50775,-38.75887)
-# sub.program  <-  "Atlantic"
-# ecsas.drive  <-  pathECSAS
-# ecsas.file  <-  fileECSAS
-# intransect <- T
-# distMeth <- 14
-  
+years <- c(2016)
+lat <- c(39.33489,74.65058)
+long  <- c(-90.50775,-38.75887)
+sub.program  <-  "Atlantic"
+ecsas.drive  <-  pathECSAS
+ecsas.file  <-  fileECSAS
+intransect <- T
+distMeth <- 14
+species <- "ATPU"  
+
   ###Make sure arguments works
   sub.program<- match.arg(sub.program)
 
@@ -94,14 +95,14 @@ ECSAS.extract <-  function(species,  years=c(2006,2013), lat=c(-90,90), long=c(-
 
   # handle species specification
   if (!missing(species)) {
-    ###Make sure that sp is in capital letters
-    sp <- toupper(sp)
+    ###Make sure that species is in capital letters
+    species <- toupper(species)
     #write SQL selection for species
-    if(length(sp)>=2){
-      nspecies <-paste0(sapply(1:length(sp),function(i){paste("(tblSpeciesInfo.Alpha)='",sp[i],"'",sep="")}), collapse=" Or ")
+    if(length(species)>=2){
+      nspecies <-paste0(sapply(1:length(species),function(i){paste("(tblSpeciesInfo.Alpha)='",species[i],"'",sep="")}), collapse=" Or ")
       sp.selection <- paste("((",nspecies,")",sep="")
     }else{
-      sp.selection <- paste("(((tblSpeciesInfo.Alpha)='",sp,"')",sep="")
+      sp.selection <- paste("(((tblSpeciesInfo.Alpha)='",species,"')",sep="")
     }
 
 
@@ -120,8 +121,8 @@ ECSAS.extract <-  function(species,  years=c(2006,2013), lat=c(-90,90), long=c(-
     specieInfo <-  sqlQuery(channel1, query.species)
 
     ###make sure the species are in the database.
-    if(nrow(specieInfo)!=length(sp)){
-      wrong.sp <-sp[!sp%in%specieInfo$Alpha]
+    if(nrow(specieInfo)!=length(species)){
+      wrong.sp <-species[!species%in%specieInfo$Alpha]
       if(length(wrong.sp)==1){
         stop(paste("species code",wrong.sp,"is not included in the database",sep=" "))
       }else{
@@ -131,8 +132,8 @@ ECSAS.extract <-  function(species,  years=c(2006,2013), lat=c(-90,90), long=c(-
 
 
     #Write a second query that is based on the species number instead of the alpha code
-    if(length(sp)>=2){
-      nspecies2 <- paste0(sapply(1:length(sp),function(i){paste("(tblSighting.SpecInfoID)=",specieInfo$SpecInfoID[i],sep="")}), collapse=" Or ")
+    if(length(species)>=2){
+      nspecies2 <- paste0(sapply(1:length(species),function(i){paste("(tblSighting.SpecInfoID)=",specieInfo$SpecInfoID[i],sep="")}), collapse=" Or ")
       sp.selection2 <- paste("AND (",nspecies2,")",sep="")
     }else{
       sp.selection2 <- paste("AND ((tblSighting.SpecInfoID)=",specieInfo$SpecInfoID,")",sep="")
