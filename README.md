@@ -11,7 +11,6 @@ Version 0.6.2
  Swimming birds: perpendicular distance" and is now the default observation protocol used in ECSAS.
 * Added detection of 32-bit R
 * Fixed 1 year extraction temporary solution and made year argument optional
-* Changed "database" argument to "sub.program" in keeping with ECSAS naming conventions.
 * Fixed bug where seastate lookup code was being returned instead of seastate
 * Changed "sp" argument to "species" and made it optional, removing the default "ATPU".
 * changed default lat and long to include the whole planet
