@@ -1,4 +1,6 @@
-
+- deal with "database" argument - change to using Program/sub.program.
+- create a generic way of dealing with where subclauses that require multiple matches (like species). Will need
+	this often.
 - deal with cruises where there were two observers (one on each side)
 - combine the multiple queries for watch, sighting, etc into one
 - add facility to select Program (ECSAS, PIROP, etc)
@@ -16,5 +18,5 @@ ECSAS.extract. Maybe a list of name=value pairs or some such??
 - add unit tests
 - test return from sqlQuery for errors
 - add an option to select whether watches with zero obs are returned or not.
-- add option to remove zero length transects
+- add option to remove zero or null length transects
 - add calculation for estimated windspeed if it is null and windforce is given
