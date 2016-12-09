@@ -2,13 +2,13 @@
 #'@title Extract the information for the Global ECSAS database
 #'
 #'@description The function will connect to the Access database, create a series of queries and import the desired information in a data frame.
-#'@param species Optional Alpha code for the species desired in the extraction. If more than one species all the desired species must be saved into a vector ex: c("COMU,"TBMU", "UNMU")
+#'@param species Optional. Alpha code (or vector of Alpha codes, e.g., c("COMU,"TBMU", "UNMU")) for the species desired in the extraction. 
 #'@param years Optional. Either a single year or a vector of two years denoting "from" and "to" (inclusive).
-#'@param lat Pairs of coordinate giving the southern and northern limits of the range desired.
-#'@param long Pairs of coordinate giving the western and eastern limits of the range desired. Note that longitude values must be negative.
+#'@param lat Pair of coordinate giving the southern and northern limits of the range desired.
+#'@param long Pair of coordinate giving the western and eastern limits of the range desired. Note that west longitude values must be negative.
 #'@param obs.keep Name of the observer to keep for the extraction. The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").
 #'@param Obs.exclude Name of the observer to exlude for the extraction.The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").
-#'@param sub.program From which sub.program the extraction must be made. Options are Quebec, Atlantic, both regions or all the observations. All the observations will inlcude the observations made in the PIROP program.
+#'@param database From which database the extraction must be made. Options are Quebec, Atlantic, both regions or all the observations. All the observations will inlcude the observations made in the PIROP program.
 #'@param intransect Should we keep only the birds counted on the transect or not.
 #'@param distMeth Integer specifying the distance sampling method code (tblWatch.DistMeth in ECSAS). Default is 14 (Perpendicular distanes for both flying and swimming birds).
 #'@param ecsas.drive Where is located the ECSAS Access database
@@ -20,7 +20,7 @@
 #'@seealso \code{\link{QC.extract}}
 
 ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), Obs.keep=NA, Obs.exclude=NA,
-           sub.program=c("Atlantic","Quebec","Both","All"), intransect=T, distMeth = 14,
+           database=c("Atlantic","Quebec","Both","All"), intransect=T, distMeth = 14,
            ecsas.drive="C:/Users/christian/Dropbox/ECSAS",
            ecsas.file="Master ECSAS_backend v 3.31.mdb"){
 
@@ -29,7 +29,7 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), Ob
 # years <- c(2016)
 # lat <- c(39.33489,74.65058)
 # long <- c(-90.50775,-38.75887)
-# sub.program <- "Atlantic"
+# database <- "Atlantic"
 # ecsas.drive <- "C:/Users/fifieldd/Documents/Offline/R/ECSAS connect/Test"
 # ecsas.file <- "Master ECSAS v 3.51.mdb"
 # intransect <- T
@@ -43,7 +43,7 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), Ob
     stop("You are not running a 32-bit R session. You must run ECSAS.extract in a 32-bit R session due to limitations in the RODBC Access driver.")
   
   ###Make sure arguments works
-  sub.program<- match.arg(sub.program)
+  database<- match.arg(database)
 
   ###setwd and open connection
   wd<-getwd()
@@ -70,16 +70,16 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), Ob
   distMeth.selection <- paste0("AND ((tblWatch.DistMeth)=", distMeth, ")")
 
   #write SQL selection for the different type of cruise
-  if(sub.program=="Atlantic"){
-    selected.sub.program <- "AND ((tblCruise.Atlantic)=TRUE)"
+  if(database=="Atlantic"){
+    selected.database <- "AND ((tblCruise.Atlantic)=TRUE)"
   }else{
-    if(sub.program=="Quebec"){
-      selected.sub.program <- "AND ((tblCruise.Quebec)=TRUE)"
+    if(database=="Quebec"){
+      selected.database <- "AND ((tblCruise.Quebec)=TRUE)"
     }else{
-      if(sub.program=="Both"){
-        selected.sub.program <- "AND ((tblCruise.Atlantic)=TRUE) OR ((tblCruise.Quebec)=TRUE)"
+      if(database=="Both"){
+        selected.database <- "AND ((tblCruise.Atlantic)=TRUE) OR ((tblCruise.Quebec)=TRUE)"
       }else{
-        selected.sub.program <- ""
+        selected.database <- ""
       }}}
 
   #write SQL selection for year
@@ -277,7 +277,7 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), Ob
                                 long.selection,
                                 #"AND ((([PlatformSpeed]*[ObsLen]/60*1.852)) Is Not Null And (([PlatformSpeed]*[ObsLen]/60*1.852))>0)",
                                 distMeth.selection,
-                                selected.sub.program,
+                                selected.database,
                                 year.selection,
                                 where.end,
                                 sep=" "),
