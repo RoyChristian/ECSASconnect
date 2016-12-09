@@ -2,6 +2,24 @@ ECSASconnect
 =======
 Import data from the Eastern Canada Seabirds at Sea (ECSAS) database
 
+Version 0.6.2
+=======
+* All changes below refer to ECSAS.extract
+* Removed snapshot argument since it did not do what was intended.
+* Added distMeth param (default 14) to extract only watches (and sightings) collected under the given distance sampling
+ methodology. The default (14 see lkpDistMeth in ECSAS database) corresponds to "Flying birds: perpendicular distance;
+ Swimming birds: perpendicular distance" and is now the default observation protocol used in ECSAS.
+* Added detection of 32-bit R
+* Fixed 1 year extraction temporary solution and made year argument optional
+* Changed "database" argument to "sub.program" in keeping with ECSAS naming conventions.
+* Fixed bug where seastate lookup code was being returned instead of seastate
+* Changed "sp" argument to "species" and made it optional, removing the default "ATPU".
+* changed default lat and long to include the whole planet
+* Added FlockID, and Association from tblSighting to the output
+* Added Association from tblSighting to the output. This is useful for filtering ship following birds (code 19) from analysis
+* Added tblCruise.Program to output. Will later add a param to filter by program. This will give an easy way to filter
+ out PIROP, etc and just select ECSAS data.
+
 Version 0.6.1
 =======
 * Added a sanity check to make sure that the requested species where inclued in the database before extraction
