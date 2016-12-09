@@ -1,2 +1,20 @@
-- fix snapshot option
-- get rid of need to specify the species.
+
+- deal with cruises where there were two observers (one on each side)
+- combine the multiple queries for watch, sighting, etc into one
+- add facility to select Program (ECSAS, PIROP, etc)
+- add facility to specify minimum speed
+- add ability to specify moving surveys (not stationary)
+- add ability to specify species groups
+- add cruise, watch and species criteria from general query form
+- do table joins in SQL instead of using jion in R since SQL is likely much more efficient.
+- add "classType" argument ie. Bird, Mammal, etc
+- figure out if database is open for exclusive use, 
+- come up with a more generic method for specifying filtering options instead of adding a separate param everytime to
+ECSAS.extract. Maybe a list of name=value pairs or some such??
+- make variable name structure consistent (either camelCase or dotted.separation)
+- apply Hadley Wickhams style guide (http://adv-r.had.co.nz/Style.html) 
+- add unit tests
+- test return from sqlQuery for errors
+- add an option to select whether watches with zero obs are returned or not.
+- add option to remove zero length transects
+- add calculation for estimated windspeed if it is null and windforce is given
