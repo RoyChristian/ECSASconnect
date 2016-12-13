@@ -38,11 +38,13 @@ Version 0.4.0
 * Imported files on Github
 
 
-##TODO LIST
+##TODO LIST FR
 
 - Check if read_excel scraps some information in columns "commentaires"" and others (check warnings when using data2SOMEC and importing a file in SOMEC)
 
 - Check for a possible confusion between columns Activite, Comportement and VolEau and what's written in the SOMEC database at the end
+
+- Watch out for possible bug in readxl:::xlsx_col_types where sheets seem to be numbered from 0 when in read_excel its from 1
 
 
 
