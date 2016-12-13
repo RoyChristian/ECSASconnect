@@ -37,9 +37,12 @@ Version 0.4.0
 =======
 * Imported files on Github
 
+
 ##TODO LIST
 
-- Change `ECSAS.extract` code argument to select all species by default and not having to give a complete species list. The problem is that if you give one code that is not there, the function stops. 
+- Check if read_excel scraps some information in columns "commentaires"" and others (check warnings when using data2SOMEC and importing a file in SOMEC)
+
+- Check for a possible confusion between columns Activite, Comportement and VolEau and what's written in the SOMEC database at the end
 
 
 
