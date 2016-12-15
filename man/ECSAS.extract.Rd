@@ -5,7 +5,9 @@
 \title{Extract the information for the Global ECSAS database}
 \usage{
 ECSAS.extract(species, years, lat = c(-90, 90), long = c(-180, 180),
-  Obs.keep = NA, Obs.exclude = NA, database = c("All", "Atlantic", "Quebec", "Arctic", "ESRF", "AZMP", "FSRS"), intransect = T, distMeth = 14,
+  Obs.keep = NA, Obs.exclude = NA, 
+  database = c("All", "Atlantic", "Quebec", "Arctic", "ESRF", "AZMP", "FSRS"), 
+  intransect = T, distMeth = 14,
   ecsas.drive = "C:/Users/christian/Dropbox/ECSAS",
   ecsas.file = "Master ECSAS_backend v 3.31.mdb")
 }
