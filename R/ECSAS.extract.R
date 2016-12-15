@@ -7,7 +7,7 @@
 #'@param lat Pair of coordinate giving the southern and northern limits of the range desired.
 #'@param long Pair of coordinate giving the western and eastern limits of the range desired. Note that west longitude values must be negative.
 #'@param obs.keep Name of the observer to keep for the extraction. The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").
-#'@param Obs.exclude Name of the observer to exlude for the extraction.The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").
+#'@param obs.exclude Name of the observer to exlude for the extraction.The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").
 #'@param database From which database the extraction must be made. Options are Quebec, Atlantic, both regions or all the observations. All the observations will inlcude the observations made in the PIROP program.
 #'@param intransect Should we keep only the birds counted on the transect or not.
 #'@param distMeth Integer specifying the distance sampling method code (tblWatch.DistMeth in ECSAS). Default is 14 (Perpendicular distanes for both flying and swimming birds).
@@ -19,7 +19,7 @@
 #'
 #'@seealso \code{\link{QC.extract}}
 
-ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), Obs.keep=NA, Obs.exclude=NA,
+ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), obs.keep=NA, obs.exclude=NA,
            database=c("All","Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS"), intransect=T, distMeth = 14,
            ecsas.drive="C:/Users/christian/Dropbox/ECSAS",
            ecsas.file="Master ECSAS_backend v 3.31.mdb"){
@@ -35,8 +35,8 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), Ob
 # intransect <- T
 # distMeth <- 14
 # species <- c("ATPU")
-# Obs.exclude <- NA
-# Obs.keep <- NA
+# obs.exclude <- NA
+# obs.keep <- NA
 
   # test for 32-bit architecture
   if (Sys.getenv("R_ARCH") != "/i386")
@@ -334,14 +334,14 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), Ob
                                         function(i){gsub(", ","_",as.character(final.df$ObserverName[i]) )}))
 
   #Select or exlude the observers
-  if(!is.na(Obs.exclude)){
-    keep1 <- setdiff(levels(final.df$ObserverName), Obs.exclude)
+  if(!is.na(obs.exclude)){
+    keep1 <- setdiff(levels(final.df$ObserverName), obs.exclude)
     final.df <- subset(final.df, final.df$ObserverName%in%keep1)
     final.df <-droplevels(final.df)
   }
 
-  if(!is.na(Obs.keep)){
-    final.df <- subset(final.df, final.df$ObserverName%in%Obs.keep)
+  if(!is.na(obs.keep)){
+    final.df <- subset(final.df, final.df$ObserverName%in%obs.keep)
     final.df <-droplevels(final.df)
   }
 
