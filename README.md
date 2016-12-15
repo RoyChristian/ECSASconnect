@@ -11,8 +11,10 @@ Import data from the Eastern Canada Seabirds at Sea (ECSAS) database
 Version 0.6.3
 =======
 * Added several new functions for importing new data to the QC SOMEC access database and exporting this data to the ECSAS database. 
-* Added the possibility to extract all or some databases from ECSAS.
-* Added a new version of the database argument in ECSAS.extract and columns for the different programs are also extracted
+* Added a new version of the database argument (now called sub.program) in ECSAS.extract and columns for the different sub.programs are also extracted
+* Added the possibility to select more than one distMeth
+* Fixed a potential bug that could cause confusion between function rename from package plyr or dplyr
+* Made arguments obs.keep ans obs.exclude more consistent with lower cases
 
 Version 0.6.2
 =======
