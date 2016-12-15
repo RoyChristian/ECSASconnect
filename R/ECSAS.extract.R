@@ -71,7 +71,7 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), Ob
   long.selection <- paste("AND ((tblWatch.LongStart)>=",long[1]," And (tblWatch.LongStart)<=",long[2],")",sep="")
 
   # SQL for distMeth
-  distMeth.selection <- paste0("AND ((tblWatch.DistMeth)=", distMeth, ")")
+  distMeth.selection <- paste0("AND (",paste0(paste0("(tblWatch.DistMeth)=",distMeth),collapse=" OR "),")") 
 
   #write SQL selection for the different type of databases
   if(any(database=="All")){
