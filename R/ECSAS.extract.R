@@ -319,7 +319,7 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), Ob
   Watches2 <- join(join(join(join(watches, seastates, by="SeaStateID", type = "left"), observer, by="ObserverID"),
                 platform.name, by="PlatformID", type="left"),
                 platform.activity,by="PlatformTypeID",type="left") [,c("CruiseID","Program", 
-                  "Atlantic","Quebec", "StartDate", "EndDate", "WatchID", "TransectNo", 
+                  "Atlantic", "Quebec", "Arctic", "ESRF", "AZMP", "FSRS", "StartDate", "EndDate", "WatchID", "TransectNo",
                   "ObserverName", "PlatformClass", "WhatCount", "TransNearEdge", "TransFarEdge","DistMeth", 
                   "Date","Year","Month","Week","Day","StartTime",
                   "EndTime", "LatStart","LongStart", "LatEnd", "LongEnd", "PlatformSpeed",
