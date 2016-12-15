@@ -65,8 +65,17 @@ data2SOMEC<-function(
 	
 	
 	sheets<-excel_sheets(input)
-	tran <- as.data.frame(read_excel(input,sheet=sheets[agrep("transect",sheets,ignore.case=TRUE)][1]),stringsAsFactors=FALSE)
-	obs <- as.data.frame(read_excel(input,sheet=sheets[agrep("observation",sheets,ignore.case=TRUE)][1]),stringsAsFactors=FALSE) 
+	
+	ns<-agrep("transect",sheets,ignore.case=TRUE)[1]
+	type<-readxl:::xlsx_col_types(input,sheet=ns-1,nskip=1) #get nb of columns, possible bug in the number given to shhet in xlsx_col_types compared to read_excel?
+	tran <- as.data.frame(read_excel(input,sheet=sheets[ns],col_types=rep("text",length(type))),stringsAsFactors=FALSE)
+	tran[]<-lapply(tran,function(i){type.convert(i,as.is=TRUE)})
+	
+	ns<-agrep("observation",sheets,ignore.case=TRUE)[1]
+	type<-readxl:::xlsx_col_types(input,sheet=ns-1,nskip=1) #get nb of columns
+	obs <- as.data.frame(read_excel(input,sheet=sheets[ns],col_types=rep("text",length(type))),stringsAsFactors=FALSE) 
+	obs[]<-lapply(obs,function(i){type.convert(i,as.is=TRUE)})
+	
 	
 	if(old){ #si les données proviennent de vieux fichiers excel
 	  data(new_names)
@@ -184,8 +193,10 @@ data2SOMEC<-function(
 	cl<-sapply(Obs,class)
 	cl<-sapply(seq_along(cl),function(i){ifelse(length(cl[[i]])==1,cl[[i]],"character")})
 	w<-which(sapply(obs,class)!=cl)
-	for(i in w){
-	  obs[,i]<-eval(parse(text=paste0("as.",cl[i],"(obs[,i])")))
+	if(any(w)){ 
+	  for(i in w){
+	    obs[,i]<-eval(parse(text=paste0("as.",cl[i],"(obs[,i])")))
+	  }
 	}
 	
 	sqlSave(db,obs,tablename="observations",append=TRUE,rownames=FALSE,addPK=FALSE,fast=TRUE,colnames=FALSE,varTypes=varTypes)

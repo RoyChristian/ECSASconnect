@@ -2,9 +2,34 @@ ECSASconnect
 =======
 Import data from the Eastern Canada Seabirds at Sea (ECSAS) database
 
-Version 0.6.2
+**For CWS computers, Java must be installed from the allowed program first for necessary package rJava to work.**
+
+**For InGeo computers, set the path to Java in the ArcGIS folder for rJava to work. When loading ECSASconnect, it seems that it may be neccessary to reset the JAVA_HOME variable before loading the package even if rJava is working. Mysterious...**
+
+`Sys.setenv(JAVA_HOME = "C:/Program Files (x86)/ArcGIS/Desktop10.2/java/jre")`
+
+Version 0.6.3
 =======
 * Added several new functions for importing new data to the QC SOMEC access database and exporting this data to the ECSAS database. 
+* Added the possibility to extract all or some databases from ECSAS.
+* Added a new version of the database argument in ECSAS.extract and columns for the different programs are also extracted
+
+Version 0.6.2
+=======
+* All changes below refer to ECSAS.extract
+* Removed snapshot argument since it did not do what was intended.
+* Added distMeth param (default 14) to extract only watches (and sightings) collected under the given distance sampling
+ methodology. The default (14 see lkpDistMeth in ECSAS database) corresponds to "Flying birds: perpendicular distance;
+ Swimming birds: perpendicular distance" and is now the default observation protocol used in ECSAS.
+* Added detection of 32-bit R
+* Fixed 1 year extraction temporary solution and made year argument optional
+* Fixed bug where seastate lookup code was being returned instead of seastate
+* Changed "sp" argument to "species" and made it optional, removing the default "ATPU".
+* changed default lat and long to include the whole planet
+* Added FlockID, and Association from tblSighting to the output
+* Added Association from tblSighting to the output. This is useful for filtering ship following birds (code 19) from analysis
+* Added tblCruise.Program to output. Will later add a param to filter by program. This will give an easy way to filter
+ out PIROP, etc and just select ECSAS data.
 
 Version 0.6.1
 =======
@@ -28,3 +53,16 @@ Version 0.5.0
 Version 0.4.0
 =======
 * Imported files on Github
+
+
+##TODO LIST FR
+
+- Check if read_excel scraps some information in columns "commentaires"" and others (check warnings when using data2SOMEC and importing a file in SOMEC)
+
+- Check for a possible confusion between columns Activite, Comportement and VolEau and what's written in the SOMEC database at the end
+
+- Watch out for possible bug in readxl:::xlsx_col_types where sheets seem to be numbered from 0 when in read_excel its from 1
+
+
+
+
