@@ -303,7 +303,7 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
   names(platform.name)[2] <- "PlatformName"
 
   # rename to do matching on seastates below. 
-  watches <- rename(watches, c("SeaState" = "SeaStateID"))
+  watches <- plyr:::rename(watches, c("SeaState" = "SeaStateID"))
   
   #merge and filter the tables for the sigthings
   Sighting2 <- join(join(Sighting,specieInfo,by="SpecInfoID",type="left"),
