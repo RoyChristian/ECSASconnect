@@ -7,8 +7,8 @@
 #'@param lat Pair of coordinate giving the southern and northern limits of the range desired.
 #'@param long Pair of coordinate giving the western and eastern limits of the range desired. Note that west longitude values must be negative.
 #'@param obs.keep Name of the observer to keep for the extraction. The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").
-#'@param Obs.exclude Name of the observer to exlude for the extraction.The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").
-#'@param database From which database the extraction must be made. Options are Quebec, Atlantic, both regions or all the observations. All the observations will inlcude the observations made in the PIROP program.
+#'@param obs.exclude Name of the observer to exlude for the extraction.The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").
+#'@param sub.program From which sub.program the extraction must be made. Options are Quebec, Atlantic, both regions or all the observations. All the observations will inlcude the observations made in the PIROP program.
 #'@param intransect Should we keep only the birds counted on the transect or not.
 #'@param distMeth Integer specifying the distance sampling method code (tblWatch.DistMeth in ECSAS). Default is 14 (Perpendicular distanes for both flying and swimming birds).
 #'@param ecsas.drive Where is located the ECSAS Access database
@@ -19,8 +19,8 @@
 #'
 #'@seealso \code{\link{QC.extract}}
 
-ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), Obs.keep=NA, Obs.exclude=NA,
-           database=c("All","Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS"), intransect=T, distMeth = 14,
+ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), obs.keep=NA, obs.exclude=NA,
+           sub.program=c("All","Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS"), intransect=T, distMeth = 14,
            ecsas.drive="C:/Users/christian/Dropbox/ECSAS",
            ecsas.file="Master ECSAS_backend v 3.31.mdb"){
 
@@ -29,25 +29,25 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), Ob
 # years <- c(2016)
 # lat <- c(39.33489,74.65058)
 # long <- c(-90.50775,-38.75887)
-# database <- "Atlantic"
+# sub.program <- "Atlantic"
 # ecsas.drive <- "C:/Users/fifieldd/Documents/Offline/R/ECSAS connect/Test"
 # ecsas.file <- "Master ECSAS v 3.51.mdb"
 # intransect <- T
 # distMeth <- 14
 # species <- c("ATPU")
-# Obs.exclude <- NA
-# Obs.keep <- NA
+# obs.exclude <- NA
+# obs.keep <- NA
 
   # test for 32-bit architecture
   if (Sys.getenv("R_ARCH") != "/i386")
     stop("You are not running a 32-bit R session. You must run ECSAS.extract in a 32-bit R session due to limitations in the RODBC Access driver.")
   
-  ###Make sure arguments works with databases
+  ###Make sure arguments works with sub.programs
   dbnames<-c("Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS")
-  if(any(is.na(match(database,c(dbnames,"All"))))){
+  if(any(is.na(match(sub.program,c(dbnames,"All"))))){
      stop(paste("Some names not matching",paste(dbnames,collapse=" "),"or All"))  
   }
-  database<- match.arg(database,several.ok=TRUE) #Not sure how to make it check for all argument names
+  sub.program<- match.arg(sub.program,several.ok=TRUE) #Not sure how to make it check for all argument names
 
   ###setwd and open connection
   wd<-getwd()
@@ -71,15 +71,14 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), Ob
   long.selection <- paste("AND ((tblWatch.LongStart)>=",long[1]," And (tblWatch.LongStart)<=",long[2],")",sep="")
 
   # SQL for distMeth
-  distMeth.selection <- paste0("AND ((tblWatch.DistMeth)=", distMeth, ")")
+  distMeth.selection <- paste0("AND (",paste0(paste0("(tblWatch.DistMeth)=",distMeth),collapse=" OR "),")") 
 
-  #write SQL selection for the different type of databases
-  if(any(database=="All")){
-    db<-dbnames
+  #write SQL selection for the different type of sub.programs
+  if(any(sub.program=="All")){
+    selected.sub.program <- "" 
   }else{
-    db<-database
+    selected.sub.program <- paste0("AND (",paste0(paste0("(tblCruise.",sub.program,")=TRUE"),collapse=" OR "),")") 
   }
-  selected.database <- paste0("AND (",paste0(paste0("(tblCruise.",db,")=TRUE"),collapse=" OR "),")") 
 
   #write SQL selection for year
   if (!missing(years)) {
@@ -282,7 +281,7 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), Ob
                                 long.selection,
                                 #"AND ((([PlatformSpeed]*[ObsLen]/60*1.852)) Is Not Null And (([PlatformSpeed]*[ObsLen]/60*1.852))>0)",
                                 distMeth.selection,
-                                selected.database,
+                                selected.sub.program,
                                 year.selection,
                                 where.end,
                                 sep=" "),
@@ -304,7 +303,7 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), Ob
   names(platform.name)[2] <- "PlatformName"
 
   # rename to do matching on seastates below. 
-  watches <- rename(watches, c("SeaState" = "SeaStateID"))
+  watches <- plyr:::rename(watches, c("SeaState" = "SeaStateID"))
   
   #merge and filter the tables for the sigthings
   Sighting2 <- join(join(Sighting,specieInfo,by="SpecInfoID",type="left"),
@@ -319,7 +318,7 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), Ob
   Watches2 <- join(join(join(join(watches, seastates, by="SeaStateID", type = "left"), observer, by="ObserverID"),
                 platform.name, by="PlatformID", type="left"),
                 platform.activity,by="PlatformTypeID",type="left") [,c("CruiseID","Program", 
-                  "Atlantic","Quebec", "StartDate", "EndDate", "WatchID", "TransectNo", 
+                  "Atlantic", "Quebec", "Arctic", "ESRF", "AZMP", "FSRS", "StartDate", "EndDate", "WatchID", "TransectNo",
                   "ObserverName", "PlatformClass", "WhatCount", "TransNearEdge", "TransFarEdge","DistMeth", 
                   "Date","Year","Month","Week","Day","StartTime",
                   "EndTime", "LatStart","LongStart", "LatEnd", "LongEnd", "PlatformSpeed",
@@ -335,14 +334,14 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), Ob
                                         function(i){gsub(", ","_",as.character(final.df$ObserverName[i]) )}))
 
   #Select or exlude the observers
-  if(!is.na(Obs.exclude)){
-    keep1 <- setdiff(levels(final.df$ObserverName), Obs.exclude)
+  if(!is.na(obs.exclude)){
+    keep1 <- setdiff(levels(final.df$ObserverName), obs.exclude)
     final.df <- subset(final.df, final.df$ObserverName%in%keep1)
     final.df <-droplevels(final.df)
   }
 
-  if(!is.na(Obs.keep)){
-    final.df <- subset(final.df, final.df$ObserverName%in%Obs.keep)
+  if(!is.na(obs.keep)){
+    final.df <- subset(final.df, final.df$ObserverName%in%obs.keep)
     final.df <-droplevels(final.df)
   }
 
