@@ -75,11 +75,10 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), Ob
 
   #write SQL selection for the different type of databases
   if(any(database=="All")){
-    db<-dbnames
+    selected.database <- "" 
   }else{
-    db<-database
+    selected.database <- paste0("AND (",paste0(paste0("(tblCruise.",database,")=TRUE"),collapse=" OR "),")") 
   }
-  selected.database <- paste0("AND (",paste0(paste0("(tblCruise.",db,")=TRUE"),collapse=" OR "),")") 
 
   #write SQL selection for year
   if (!missing(years)) {
