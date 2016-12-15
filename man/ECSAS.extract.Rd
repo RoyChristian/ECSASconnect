@@ -6,7 +6,7 @@
 \usage{
 ECSAS.extract(species, years, lat = c(-90, 90), long = c(-180, 180),
   obs.keep = NA, obs.exclude = NA, 
-  database = c("All", "Atlantic", "Quebec", "Arctic", "ESRF", "AZMP", "FSRS"), 
+  sub.program = c("All", "Atlantic", "Quebec", "Arctic", "ESRF", "AZMP", "FSRS"), 
   intransect = T, distMeth = c(14, 20),
   ecsas.drive = "C:/Users/christian/Dropbox/ECSAS",
   ecsas.file = "Master ECSAS_backend v 3.31.mdb")
@@ -23,7 +23,7 @@ ECSAS.extract(species, years, lat = c(-90, 90), long = c(-180, 180),
 
 \item{obs.exclude}{Name of the observer to exlude for the extraction.The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").}
 
-\item{database}{From which databases the extraction must be made. When \code{database = "All"}, all data will be extracted. Otherwise, a character vector of the names of the desired database has to be given. When "All" is included, all data is extracted. See arguments for the list of possible databases.}
+\item{sub.program}{From which sub.programs the extraction must be made. When \code{sub.program = "All"}, all data will be extracted. Otherwise, a character vector of the names of the desired sub.program has to be given. When "All" is included, all data is extracted. See arguments for the list of possible sub.programs.}
 
 \item{intransect}{Should we keep only the birds counted on the transect or not.}
 
