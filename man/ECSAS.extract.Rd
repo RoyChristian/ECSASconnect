@@ -5,11 +5,11 @@
 \title{Extract the information for the Global ECSAS database}
 \usage{
 ECSAS.extract(species, years, lat = c(-90, 90), long = c(-180, 180),
-  Obs.keep = NA, Obs.exclude = NA, database = c("Atlantic", "Quebec",
-  "Both", "All"), intransect = T, distMeth = 14,
+  Obs.keep = NA, Obs.exclude = NA, database = c("All", "Atlantic", "Quebec", "Arctic", "ESRF", "AZMP", "FSRS"), intransect = T, distMeth = 14,
   ecsas.drive = "C:/Users/christian/Dropbox/ECSAS",
   ecsas.file = "Master ECSAS_backend v 3.31.mdb")
 }
+       
 \arguments{
 \item{species}{Optional. Alpha code (or vector of Alpha codes, e.g., c("COMU,"TBMU", "UNMU")) for the species desired in the extraction.}
 
@@ -21,7 +21,7 @@ ECSAS.extract(species, years, lat = c(-90, 90), long = c(-180, 180),
 
 \item{Obs.exclude}{Name of the observer to exlude for the extraction.The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").}
 
-\item{database}{From which database the extraction must be made. Options are Quebec, Atlantic, both regions or all the observations. All the observations will inlcude the observations made in the PIROP program.}
+\item{database}{From which databases the extraction must be made. When \code{database = "All"}, all data will be extracted. Otherwise, a character vector of the names of the desired database has to be given. When "All" is included, all data is extracted. See arguments for the list of possible databases.}
 
 \item{intransect}{Should we keep only the birds counted on the transect or not.}
 

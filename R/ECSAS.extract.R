@@ -20,7 +20,7 @@
 #'@seealso \code{\link{QC.extract}}
 
 ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), Obs.keep=NA, Obs.exclude=NA,
-           database=c("Atlantic","Quebec","Both","All"), intransect=T, distMeth = 14,
+           database=c("All","Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS"), intransect=T, distMeth = 14,
            ecsas.drive="C:/Users/christian/Dropbox/ECSAS",
            ecsas.file="Master ECSAS_backend v 3.31.mdb"){
 
@@ -42,8 +42,12 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), Ob
   if (Sys.getenv("R_ARCH") != "/i386")
     stop("You are not running a 32-bit R session. You must run ECSAS.extract in a 32-bit R session due to limitations in the RODBC Access driver.")
   
-  ###Make sure arguments works
-  database<- match.arg(database)
+  ###Make sure arguments works with databases
+  dbnames<-c("Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS")
+  if(any(is.na(match(database,c(dbnames,"All"))))){
+     stop(paste("Some names not matching",paste(dbnames,collapse=" "),"or All"))  
+  }
+  database<- match.arg(database,several.ok=TRUE) #Not sure how to make it check for all argument names
 
   ###setwd and open connection
   wd<-getwd()
@@ -69,18 +73,13 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), Ob
   # SQL for distMeth
   distMeth.selection <- paste0("AND ((tblWatch.DistMeth)=", distMeth, ")")
 
-  #write SQL selection for the different type of cruise
-  if(database=="Atlantic"){
-    selected.database <- "AND ((tblCruise.Atlantic)=TRUE)"
+  #write SQL selection for the different type of databases
+  if(any(database=="All")){
+    db<-dbnames
   }else{
-    if(database=="Quebec"){
-      selected.database <- "AND ((tblCruise.Quebec)=TRUE)"
-    }else{
-      if(database=="Both"){
-        selected.database <- "AND ((tblCruise.Atlantic)=TRUE) OR ((tblCruise.Quebec)=TRUE)"
-      }else{
-        selected.database <- ""
-      }}}
+    db<-database
+  }
+  selected.database <- paste0("AND (",paste0(paste0("(tblCruise.",db,")=TRUE"),collapse=" OR "),")") 
 
   #write SQL selection for year
   if (!missing(years)) {
@@ -98,6 +97,7 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), Ob
   if (!missing(species)) {
     ###Make sure that species is in capital letters
     species <- toupper(species)
+    
     #write SQL selection for species
     if(length(species)>=2){
       nspecies <-paste0(sapply(1:length(species),function(i){paste("(tblSpeciesInfo.Alpha)='",species[i],"'",sep="")}), collapse=" Or ")
@@ -141,6 +141,7 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), Ob
     }
 
     #Write the query to import the table for sighting
+
     query.sighting <-  paste(paste("SELECT tblSighting.WatchID",
                                  "tblSighting.FlockID",
                                  "tblSighting.SpecInfoID",
@@ -266,8 +267,12 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), Ob
                                 "tblWatch.ScanType",
                                 "tblWatch.ScanDir",                                
                                 "tblCruise.Atlantic",
-                                "tblCruise.Quebec",
-                                  "DatePart('yyyy',[Date]) AS [Year]",
+                                "tblCruise.Quebec",                    
+                                "tblCruise.Arctic",
+                                "tblCruise.ESRF",
+                                "tblCruise.AZMP",
+                                "tblCruise.FSRS",
+                                "DatePart('yyyy',[Date]) AS [Year]",
                                 "DatePart('m',[Date]) AS [Month]",
                                 "DatePart('ww',[Date]) AS Week",
                                 "DatePart('y',[Date]) AS [Day]", sep=", "),
@@ -347,3 +352,4 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), Ob
   return(final.df)
   #End
 }
+      
