@@ -5,13 +5,11 @@
 \title{Extract the information for the Global ECSAS database}
 \usage{
 ECSAS.extract(species, years, lat = c(-90, 90), long = c(-180, 180),
-  obs.keep = NA, obs.exclude = NA, 
-  sub.program = c("All", "Atlantic", "Quebec", "Arctic", "ESRF", "AZMP", "FSRS"), 
-  intransect = T, distMeth = c(14, 20),
-  ecsas.drive = "C:/Users/christian/Dropbox/ECSAS",
+  obs.keep = NA, obs.exclude = NA, sub.program = c("All", "Atlantic",
+  "Quebec", "Arctic", "ESRF", "AZMP", "FSRS"), intransect = T,
+  distMeth = c(14, 20), ecsas.drive = "C:/Users/christian/Dropbox/ECSAS",
   ecsas.file = "Master ECSAS_backend v 3.31.mdb")
 }
-       
 \arguments{
 \item{species}{Optional. Alpha code (or vector of Alpha codes, e.g., c("COMU,"TBMU", "UNMU")) for the species desired in the extraction.}
 
@@ -21,19 +19,19 @@ ECSAS.extract(species, years, lat = c(-90, 90), long = c(-180, 180),
 
 \item{long}{Pair of coordinate giving the western and eastern limits of the range desired. Note that west longitude values must be negative.}
 
+\item{obs.keep}{Name of the observer to keep for the extraction. The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").}
+
 \item{obs.exclude}{Name of the observer to exlude for the extraction.The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").}
 
-\item{sub.program}{From which sub.programs the extraction must be made. When \code{sub.program = "All"}, all data will be extracted. Otherwise, a character vector of the names of the desired sub.program has to be given. When "All" is included, all data is extracted. See arguments for the list of possible sub.programs.}
+\item{sub.program}{From which sub.program the extraction must be made. Options are Quebec, Atlantic, both regions or all the observations. All the observations will inlcude the observations made in the PIROP program.}
 
 \item{intransect}{Should we keep only the birds counted on the transect or not.}
 
-\item{distMeth}{Integers specifying the distance sampling method code (tblWatch.DistMeth in ECSAS). Default is 14 (perpendicular distances for both flying and swimming birds) and 20 (distances both perpendicular and radial in some Quebec cruises).}
+\item{distMeth}{Integer specifying the distance sampling method code (tblWatch.DistMeth in ECSAS). Default is c(14, 20) which includes all watches with perpendicular distanes for both flying and swimming birds.}
 
 \item{ecsas.drive}{Where is located the ECSAS Access database}
 
 \item{ecsas.file}{What is the name of the ECSAS Access database}
-
-\item{obs.keep}{Name of the observer to keep for the extraction. The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").}
 }
 \description{
 The function will connect to the Access database, create a series of queries and import the desired information in a data frame.
