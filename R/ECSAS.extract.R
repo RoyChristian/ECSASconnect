@@ -2,7 +2,7 @@
 #'@title Extract the information for the Global ECSAS database
 #'
 #'@description The function will connect to the Access database, create a series of queries and import the desired information in a data frame.
-#'@param species Optional. Alpha code (or vector of Alpha codes, e.g., c("COMU,"TBMU", "UNMU")) for the species desired in the extraction. 
+#'@param species Optional. Alpha code (or vector of Alpha codes, e.g., c("COMU,"TBMU", "UNMU")) for the species desired in the extraction.
 #'@param years Optional. Either a single year or a vector of two years denoting "from" and "to" (inclusive).
 #'@param lat Pair of coordinate giving the southern and northern limits of the range desired.
 #'@param long Pair of coordinate giving the western and eastern limits of the range desired. Note that west longitude values must be negative.
@@ -10,7 +10,7 @@
 #'@param obs.exclude Name of the observer to exlude for the extraction.The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").
 #'@param sub.program From which sub.program the extraction must be made. Options are Quebec, Atlantic, both regions or all the observations. All the observations will inlcude the observations made in the PIROP program.
 #'@param intransect Should we keep only the birds counted on the transect or not.
-#'@param distMeth Integer specifying the distance sampling method code (tblWatch.DistMeth in ECSAS). Default is 14 (Perpendicular distanes for both flying and swimming birds).
+#'@param distMeth Integer specifying the distance sampling method code (tblWatch.DistMeth in ECSAS). Default is c(14, 20) which includes all watches with perpendicular distanes for both flying and swimming birds.
 #'@param ecsas.drive Where is located the ECSAS Access database
 #'@param ecsas.file  What is the name of the ECSAS Access database
 #'@details
@@ -20,7 +20,7 @@
 #'@seealso \code{\link{QC.extract}}
 
 ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), obs.keep=NA, obs.exclude=NA,
-           sub.program=c("All","Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS"), intransect=T, distMeth = 14,
+           sub.program=c("All","Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS"), intransect=T, distMeth = c(14, 20),
            ecsas.drive="C:/Users/christian/Dropbox/ECSAS",
            ecsas.file="Master ECSAS_backend v 3.31.mdb"){
 
@@ -41,11 +41,11 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
   # test for 32-bit architecture
   if (Sys.getenv("R_ARCH") != "/i386")
     stop("You are not running a 32-bit R session. You must run ECSAS.extract in a 32-bit R session due to limitations in the RODBC Access driver.")
-  
+
   ###Make sure arguments works with sub.programs
   dbnames<-c("Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS")
   if(any(is.na(match(sub.program,c(dbnames,"All"))))){
-     stop(paste("Some names not matching",paste(dbnames,collapse=" "),"or All"))  
+     stop(paste("Some names not matching",paste(dbnames,collapse=" "),"or All"))
   }
   sub.program<- match.arg(sub.program,several.ok=TRUE) #Not sure how to make it check for all argument names
 
@@ -58,7 +58,7 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
   # correct in case there are no other where conditions.
   where.start <-  "WHERE ((1=1)"
   where.end <- ")"
-  
+
   #Write SQL selection for intransect birds
   if(intransect){
     intransect.selection <- "AND ((tblSighting.InTransect)=True)"
@@ -71,13 +71,13 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
   long.selection <- paste("AND ((tblWatch.LongStart)>=",long[1]," And (tblWatch.LongStart)<=",long[2],")",sep="")
 
   # SQL for distMeth
-  distMeth.selection <- paste0("AND (",paste0(paste0("(tblWatch.DistMeth)=",distMeth),collapse=" OR "),")") 
+  distMeth.selection <- paste0("AND (",paste0(paste0("(tblWatch.DistMeth)=",distMeth),collapse=" OR "),")")
 
   #write SQL selection for the different type of sub.programs
   if(any(sub.program=="All")){
-    selected.sub.program <- "" 
+    selected.sub.program <- ""
   }else{
-    selected.sub.program <- paste0("AND (",paste0(paste0("(tblCruise.",sub.program,")=TRUE"),collapse=" OR "),")") 
+    selected.sub.program <- paste0("AND (",paste0(paste0("(tblCruise.",sub.program,")=TRUE"),collapse=" OR "),")")
   }
 
   #write SQL selection for year
@@ -88,15 +88,15 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
       year.selection <- paste0("AND ((DatePart('yyyy',[Date]))Between ",years[1]," And ",years[2],")")
     else
       stop("Years must be either a single number or a vector of two numbers.")
-  } else { 
+  } else {
     year.selection <- ""
   }
-  
+
   # handle species specification
   if (!missing(species)) {
     ###Make sure that species is in capital letters
     species <- toupper(species)
-    
+
     #write SQL selection for species
     if(length(species)>=2){
       nspecies <-paste0(sapply(1:length(species),function(i){paste("(tblSpeciesInfo.Alpha)='",species[i],"'",sep="")}), collapse=" Or ")
@@ -162,7 +162,7 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
                                  "tblWatch.Date", sep=", "),
                            paste("FROM tblWatch",
                                  "INNER JOIN tblSighting ON tblWatch.WatchID = tblSighting.WatchID", sep=" "),
-                           paste(where.start, 
+                           paste(where.start,
                                  lat.selection,
                                  long.selection,
                                  sp.selection2,
@@ -227,14 +227,14 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
                                 "tblCruise.[Start Date] AS [StartDate]",
                                 "tblCruise.[End Date] AS [EndDate]",
                                 "tblWatch.WatchID",
-                                "tblWatch.TransectNo",                                
-                                "tblWatch.PlatformClass",                                
-                                "tblWatch.WhatCount",                                
+                                "tblWatch.TransectNo",
+                                "tblWatch.PlatformClass",
+                                "tblWatch.WhatCount",
                                 "tblWatch.TransNearEdge",
                                 "tblWatch.TransFarEdge",
                                 "tblWatch.DistMeth",
                                 "tblWatch.Observer AS [ObserverID]",
-                                "tblWatch.Observer2 AS [Observer2ID]",                                
+                                "tblWatch.Observer2 AS [Observer2ID]",
                                 "tblWatch.Date AS [Date]",
                                 "tblWatch.StartTime",
                                 "tblWatch.EndTime",
@@ -244,8 +244,8 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
                                 "tblWatch.LongEnd",
                                 "tblWatch.PlatformSpeed",
                                 "tblWatch.PlatformDir",
-                                "tblWatch.ObsLen",                                
-                                "tblWatch.PlatformActivity",                                
+                                "tblWatch.ObsLen",
+                                "tblWatch.PlatformActivity",
                                 "([PlatformSpeed]*[ObsLen]/60*1.852) AS [WatchLenKm]",
                                 "tblWatch.Snapshot",
                                 "tblWatch.ObservationType AS [Experience]",
@@ -264,9 +264,9 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
                                 "tblWatch.ObsOutIn",
                                 "tblWatch.ObsHeight",
                                 "tblWatch.ScanType",
-                                "tblWatch.ScanDir",                                
+                                "tblWatch.ScanDir",
                                 "tblCruise.Atlantic",
-                                "tblCruise.Quebec",                    
+                                "tblCruise.Quebec",
                                 "tblCruise.Arctic",
                                 "tblCruise.ESRF",
                                 "tblCruise.AZMP",
@@ -302,9 +302,9 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
   #name change for the second column
   names(platform.name)[2] <- "PlatformName"
 
-  # rename to do matching on seastates below. 
+  # rename to do matching on seastates below.
   watches <- plyr:::rename(watches, c("SeaState" = "SeaStateID"))
-  
+
   #merge and filter the tables for the sigthings
   Sighting2 <- join(join(Sighting,specieInfo,by="SpecInfoID",type="left"),
                     distance,by="DistanceCode") [,c("FlockID", "WatchID","Alpha","English","Latin","Class",
@@ -312,14 +312,14 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
                                                     "InTransect","Association", "Behaviour","FlightDir","FlySwim",
                                                     "Count","Age","Plumage","Sex")]
 
-  
-  
+
+
   #merge and filter the tables for the watches
   Watches2 <- join(join(join(join(watches, seastates, by="SeaStateID", type = "left"), observer, by="ObserverID"),
                 platform.name, by="PlatformID", type="left"),
-                platform.activity,by="PlatformTypeID",type="left") [,c("CruiseID","Program", 
+                platform.activity,by="PlatformTypeID",type="left") [,c("CruiseID","Program",
                   "Atlantic", "Quebec", "Arctic", "ESRF", "AZMP", "FSRS", "StartDate", "EndDate", "WatchID", "TransectNo",
-                  "ObserverName", "PlatformClass", "WhatCount", "TransNearEdge", "TransFarEdge","DistMeth", 
+                  "ObserverName", "PlatformClass", "WhatCount", "TransNearEdge", "TransFarEdge","DistMeth",
                   "Date","Year","Month","Week","Day","StartTime",
                   "EndTime", "LatStart","LongStart", "LatEnd", "LongEnd", "PlatformSpeed",
                   "PlatformDir", "ObsLen", "WatchLenKm", "Snapshot","Experience",
@@ -328,7 +328,7 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
 
   ###Create the final table by joining the observations to the watches
   final.df <- join(Watches2, Sighting2, by="WatchID", type="left", match="all")
-  
+
   #Change the way the observer names are stored in the table
   final.df$ObserverName <- as.factor(sapply(1:nrow( final.df),
                                         function(i){gsub(", ","_",as.character(final.df$ObserverName[i]) )}))
@@ -351,4 +351,5 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
   return(final.df)
   #End
 }
-      
+
+
