@@ -1,4 +1,3 @@
-- deal with "database" argument - change to using Program/sub.program.
 - create a generic way of dealing with where subclauses that require multiple matches (like species). Will need
 	this often.
 - deal with cruises where there were two observers (one on each side)
