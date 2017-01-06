@@ -10,7 +10,7 @@
     version <- "Unknown version"
   }
 
-  hello <- paste("This is ECSASconnect ", version, ".")
+  hello <- paste0("This is ECSASconnect ", version, ".")
   packageStartupMessage(hello)
 }
 
