@@ -302,7 +302,7 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
   setwd(wd)
   
   # Export the final product
-  return(final.df)
+  return(drop.levels(final.df))
   
   #End
 }
