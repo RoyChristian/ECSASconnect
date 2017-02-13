@@ -42,6 +42,11 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
   if (Sys.getenv("R_ARCH") != "/i386")
     stop("You are not running a 32-bit R session. You must run ECSAS.extract in a 32-bit R session due to limitations in the RODBC Access driver.")
 
+  # initialize various SQL sub-clauses here. Simplifies if-then-else logic below.
+  intransect.selection <- ""  
+  year.selection <- ""
+  sp.selection <- ""
+  
   ###Make sure arguments works with sub.programs
   sub.program.names<-c("Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS")
   if(any(is.na(match(sub.program,c(sub.program.names,"All"))))){
@@ -62,8 +67,6 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
   #Write SQL selection for intransect birds
   if(intransect){
     intransect.selection <- "AND ((tblSighting.InTransect)=True)"
-  }else{
-    intransect.selection <- ""
   }
 
   #write SQL selection for latitude and longitude
@@ -88,12 +91,9 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
       year.selection <- paste0("AND ((DatePart('yyyy',[Date]))Between ",years[1]," And ",years[2],")")
     else
       stop("Years must be either a single number or a vector of two numbers.")
-  } else {
-    year.selection <- ""
   }
 
-  # XXX get Seabird and Waterbird columns
-  #SQL query to import the species table. Just go ahead and import whole thing since it's short (~600 rows)
+  # SQL query to import the species table. Just go ahead and import whole thing since it's short (~600 rows)
   query.species <- paste(
     paste(
       "SELECT tblSpeciesInfo.Alpha",
@@ -136,11 +136,8 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
       paste("(tblSighting.SpecInfoID)=", specieInfo[specieInfo$Alpha == species[i], ]$SpecInfoID, sep = "")
       }), collapse = " Or ")
     sp.selection <- paste("AND (", nspecies, ")", sep = "")
-  } else { # no species was specified, so just get them all
-    sp.selection <- ""
-  }
+  } 
 
-  
   # Write the query to import the table for sighting
   query.sighting <-  paste(paste("SELECT tblSighting.WatchID",
                                 "tblSighting.SpecInfoID",
@@ -302,7 +299,7 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
   setwd(wd)
   
   # Export the final product
-  return(drop.levels(final.df))
+  return(droplevels(final.df))
   
   #End
 }
