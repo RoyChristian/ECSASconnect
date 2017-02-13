@@ -43,11 +43,11 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
     stop("You are not running a 32-bit R session. You must run ECSAS.extract in a 32-bit R session due to limitations in the RODBC Access driver.")
 
   ###Make sure arguments works with sub.programs
-  dbnames<-c("Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS")
-  if(any(is.na(match(sub.program,c(dbnames,"All"))))){
-     stop(paste("Some names not matching",paste(dbnames,collapse=" "),"or All"))
+  sub.program.names<-c("Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS")
+  if(any(is.na(match(sub.program,c(sub.program.names,"All"))))){
+     stop(paste("Unknown sub.program(s) specified. Sub-program should be one of: ",paste(sub.program.names,collapse=" "),"or All"))
   }
-  sub.program<- match.arg(sub.program,several.ok=TRUE) #Not sure how to make it check for all argument names
+  sub.program<- match.arg(sub.program, several.ok=TRUE) #Not sure how to make it check for all argument names
 
   ###setwd and open connection
   wd<-getwd()
