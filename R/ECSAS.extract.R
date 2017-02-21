@@ -30,7 +30,7 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
 # lat <- c(39.33489,74.65058)
 # long <- c(-90.50775,-38.75887)
 # sub.program <- "Atlantic"
-# ecsas.drive <- "C:/Users/fifieldd/Documents/Offline/R/ECSAS connect/Test"
+# ecsas.drive <- "C:/Users/fifieldd/Documents/Offline/R/ECSASconnect Fresh/Test"
 # ecsas.file <- "Master ECSAS v 3.51.mdb"
 # intransect <- T
 # distMeth <- 14
@@ -42,6 +42,11 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
   if (Sys.getenv("R_ARCH") != "/i386")
     stop("You are not running a 32-bit R session. You must run ECSAS.extract in a 32-bit R session due to limitations in the RODBC Access driver.")
 
+  # initialize various SQL sub-clauses here. Simplifies if-then-else logic below.
+  intransect.selection <- ""  
+  year.selection <- ""
+  sp.selection <- ""
+  
   ###Make sure arguments works with sub.programs
   sub.program.names<-c("Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS")
   if(any(is.na(match(sub.program,c(sub.program.names,"All"))))){
@@ -62,8 +67,6 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
   #Write SQL selection for intransect birds
   if(intransect){
     intransect.selection <- "AND ((tblSighting.InTransect)=True)"
-  }else{
-    intransect.selection <- ""
   }
 
   #write SQL selection for latitude and longitude
@@ -88,138 +91,85 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
       year.selection <- paste0("AND ((DatePart('yyyy',[Date]))Between ",years[1]," And ",years[2],")")
     else
       stop("Years must be either a single number or a vector of two numbers.")
-  } else {
-    year.selection <- ""
   }
 
+  # SQL query to import the species table. Just go ahead and import whole thing since it's short (~600 rows)
+  query.species <- paste(
+    paste(
+      "SELECT tblSpeciesInfo.Alpha",
+      "tblSpeciesInfo.English",
+      "tblSpeciesInfo.Latin",
+      "tblSpeciesInfo.Class",
+      "tblSpeciesInfo.Seabird",
+      "tblSpeciesInfo.Waterbird",      
+      "tblSpeciesInfo.SpecInfoID",
+      sep = ", "
+    ),
+    "FROM tblSpeciesInfo",
+    sep = " "
+  )
+
+  #Excute query for species
+  specieInfo <-  sqlQuery(channel1, query.species)
+  
   # handle species specification
   if (!missing(species)) {
-    ###Make sure that species is in capital letters
+    ### Make sure that species is in capital letters
     species <- toupper(species)
 
-    #write SQL selection for species
-    if(length(species)>=2){
-      nspecies <-paste0(sapply(1:length(species),function(i){paste("(tblSpeciesInfo.Alpha)='",species[i],"'",sep="")}), collapse=" Or ")
-      sp.selection <- paste("((",nspecies,")",sep="")
-    }else{
-      sp.selection <- paste("(((tblSpeciesInfo.Alpha)='",species,"')",sep="")
-    }
-
-
-    #SQL queries to import the species table
-    query.species <- paste(paste("SELECT tblSpeciesInfo.Alpha",
-                                 "tblSpeciesInfo.English",
-                                 "tblSpeciesInfo.Latin",
-                                 "tblSpeciesInfo.Class",
-                                 "tblSpeciesInfo.SpecInfoID", sep=", "),
-                           "FROM tblSpeciesInfo",
-                           "WHERE",
-                           sp.selection,
-                           "AND ((tblSpeciesInfo.Class)='Bird'))", sep=" ")
-
-    #Excute query for species
-    specieInfo <-  sqlQuery(channel1, query.species)
-
-    ###make sure the species are in the database.
-    if(nrow(specieInfo)!=length(species)){
-      wrong.sp <-species[!species%in%specieInfo$Alpha]
-      if(length(wrong.sp)==1){
-        stop(paste("species code",wrong.sp,"is not included in the database",sep=" "))
+    ### make sure the species are in the database.
+    wrong.sp <-species[!species%in%specieInfo$Alpha]
+    if (length(wrong.sp) > 0){
+        if(length(wrong.sp) == 1){
+        stop(paste("species code", wrong.sp, "is not included in the database", sep = " "))
       }else{
-        stop(paste("species code",paste(wrong.sp, collapse=" and "),"are not included in the database",sep=" "))
+        stop(paste("species codes", paste(wrong.sp, collapse = " and "), "are not included in the database", sep = " "))
       }
     }
 
+    # Remove speciesinfo records where Alpha is NA, since they can't currently be specified for selection anyway. This helps
+    # for the indexing below.
+    specieInfo <- dplyr:::filter(specieInfo, !is.na(Alpha))
+    
+    # Form the WHERE clause that is based on the species number instead of the alpha code
+    nspecies <- paste0(sapply(1:length(species), function(i) {
+      paste("(tblSighting.SpecInfoID)=", specieInfo[specieInfo$Alpha == species[i], ]$SpecInfoID, sep = "")
+      }), collapse = " Or ")
+    sp.selection <- paste("AND (", nspecies, ")", sep = "")
+  } 
 
-    #Write a second query that is based on the species number instead of the alpha code
-    if(length(species)>=2){
-      nspecies2 <- paste0(sapply(1:length(species),function(i){paste("(tblSighting.SpecInfoID)=",specieInfo$SpecInfoID[i],sep="")}), collapse=" Or ")
-      sp.selection2 <- paste("AND (",nspecies2,")",sep="")
-    }else{
-      sp.selection2 <- paste("AND ((tblSighting.SpecInfoID)=",specieInfo$SpecInfoID,")",sep="")
-    }
-
-    #Write the query to import the table for sighting
-
-    query.sighting <-  paste(paste("SELECT tblSighting.WatchID",
-                                 "tblSighting.FlockID",
-                                 "tblSighting.SpecInfoID",
-                                 "tblSighting.ObsLat",
-                                 "tblSighting.ObsLong",
-                                 "tblSighting.ObsTime",
-                                 "tblSighting.Distance AS [DistanceCode]",
-                                 "tblSighting.InTransect",
-                                 "tblSighting.Association",
-                                 "tblSighting.Behaviour",
-                                 "tblSighting.FlightDir",
-                                 "tblSighting.FlySwim",
-                                 "tblSighting.Count",
-                                 "tblSighting.Age",
-                                 "tblSighting.Plumage",
-                                 "tblSighting.Sex",
-                                 "tblWatch.LatStart",
-                                 "tblWatch.LongStart",
-                                 "tblWatch.Date", sep=", "),
-                           paste("FROM tblWatch",
-                                 "INNER JOIN tblSighting ON tblWatch.WatchID = tblSighting.WatchID", sep=" "),
-                           paste(where.start,
-                                 lat.selection,
-                                 long.selection,
-                                 sp.selection2,
-                                 intransect.selection,
-                                 year.selection,
-                                 where.end,
-                                 sep=" "))
-
-  } else { # no species was specified, so just get them all
-
-
-    #SQL query to import the species info table
-    query.species <- paste(paste("SELECT tblSpeciesInfo.Alpha",
-                                 "tblSpeciesInfo.English",
-                                 "tblSpeciesInfo.Latin",
-                                 "tblSpeciesInfo.Class",
-                                 "tblSpeciesInfo.SpecInfoID", sep=", "),
-                           "FROM tblSpeciesInfo",
-                           "WHERE ((tblSpeciesInfo.Class)='Bird')", sep=" ")
-
-    #Excute query for species
-    specieInfo <-  sqlQuery(channel1, query.species)
-
-
-    #Write the query to import the table for sighting
-    query.sighting <-  paste(paste("SELECT tblSighting.WatchID",
-                                 "tblSighting.SpecInfoID",
-                                 "tblSighting.FlockID",
-                                 "tblSighting.ObsLat",
-                                 "tblSighting.ObsLong",
-                                 "tblSighting.ObsTime",
-                                 "tblSighting.Distance AS [DistanceCode]",
-                                 "tblSighting.InTransect",
-                                 "tblSighting.Association",
-                                 "tblSighting.Behaviour",
-                                 "tblSighting.FlightDir",
-                                 "tblSighting.FlySwim",
-                                 "tblSighting.Count",
-                                 "tblSighting.Age",
-                                 "tblSighting.Plumage",
-                                 "tblSighting.Sex",
-                                 "tblWatch.LatStart",
-                                 "tblWatch.LongStart",
-                                 "tblWatch.Date", sep=", "),
-                           paste("FROM tblWatch",
-                                 "INNER JOIN tblSighting ON tblWatch.WatchID = tblSighting.WatchID", sep=" "),
-                           paste(where.start,
-                                 lat.selection,
-                                 long.selection,
-                                 intransect.selection,
-                                 distMeth.selection,
-                                 year.selection,
-                                 where.end,
-                                 sep=" "))
-  }
-
-
+  # Write the query to import the table for sighting
+  query.sighting <-  paste(paste("SELECT tblSighting.WatchID",
+                                "tblSighting.SpecInfoID",
+                                "tblSighting.FlockID",
+                                "tblSighting.ObsLat",
+                                "tblSighting.ObsLong",
+                                "tblSighting.ObsTime",
+                                "tblSighting.Distance AS [DistanceCode]",
+                                "tblSighting.InTransect",
+                                "tblSighting.Association",
+                                "tblSighting.Behaviour",
+                                "tblSighting.FlightDir",
+                                "tblSighting.FlySwim",
+                                "tblSighting.Count",
+                                "tblSighting.Age",
+                                "tblSighting.Plumage",
+                                "tblSighting.Sex",
+                                "tblWatch.LatStart",
+                                "tblWatch.LongStart",
+                                "tblWatch.Date", sep=", "),
+                        "FROM tblWatch INNER JOIN tblSighting ON tblWatch.WatchID = tblSighting.WatchID",
+                        paste(where.start,
+                               lat.selection,
+                               long.selection,
+                               sp.selection,
+                               intransect.selection,
+                               distMeth.selection,
+                               year.selection,
+                               where.end,
+                               sep=" "
+                        )
+                    )
 
   #Write the query to import the watches table
   query.watches <-  paste(paste("SELECT tblWatch.CruiseID",
@@ -308,7 +258,7 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
   #merge and filter the tables for the sigthings
   Sighting2 <- join(join(Sighting,specieInfo,by="SpecInfoID",type="left"),
                     distance,by="DistanceCode") [,c("FlockID", "WatchID","Alpha","English","Latin","Class",
-                                                    "ObsLat","ObsLong","ObsTime","Distance","DistanceCode",
+                                                    "Seabird", "Waterbird","ObsLat","ObsLong","ObsTime","Distance","DistanceCode",
                                                     "InTransect","Association", "Behaviour","FlightDir","FlySwim",
                                                     "Count","Age","Plumage","Sex")]
 
@@ -345,10 +295,12 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
     final.df <-droplevels(final.df)
   }
 
-  #Return to the working drive
+  # Return to the working drive
   setwd(wd)
-  #Export the final product
-  return(final.df)
+  
+  # Export the final product
+  return(droplevels(final.df))
+  
   #End
 }
 
