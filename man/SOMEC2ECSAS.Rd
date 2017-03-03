@@ -16,13 +16,17 @@ SOMEC2ECSAS(input="SOMEC.accdb",output="ECSASexport.csv",
 \arguments{
   \item{input}{Name and path to the Access Quebec SOMEC database.}
   \item{output}{Name and path of the export .csv file created.}
-  \item{date}{Cut off date after which the data should be extracted (character, format: "yyyy-mm-dd")}
+  \item{date}{Cut off date after which the data should be extracted (character, format: "yyyy-mm-dd").}
   \item{step}{Length of bouts in minutes to cut or join the transects into (default: "5 min"). Original QC data is cut in 1 minute bouts. See the by argument of \code{\link{seq.POSIXt}} for details on how to specify a value.}
   \item{spNA}{Species codes without matches will be turned to NAs or left with their codes.}
+  \item{excludeCruises}{Character vector with cruises ids to exclude.}
+  \item{typeSaisie}{Character vector to subset the way data was collected. Defaults to "ordi" - only datacollected on computer will be returned.}
+  \item{inTransect}{Should only data in transect be returned? Defaults to TRUE}
 %%     ~~Describe \code{x} here~~
 }
 \details{
 %%  ~~ If necessary, more details than the description above ~~
+If output, date, excludeCruises or typeSaisie are NULL, the corresponding options will be ignored.
 }
 \value{
 A .csv file written at the given location.
