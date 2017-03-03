@@ -14,10 +14,13 @@ SOMEC2ECSAS <- function(
 	spNA = TRUE,
 	excludeCruises = NULL,
 	typeSaisie = "ordi",
-	inTransect = TRUE
+	inTransect = TRUE,
+	saveErrors = TRUE
 	
 ){
-	
+	errors <- list()
+	errorCount <- 1
+  
 	# d = name of the QC database to connect to
 	# watch_len = duration of watch blocks in minutes  
 	
@@ -33,7 +36,7 @@ SOMEC2ECSAS <- function(
 		longueur_km
 	}
 	
- 	split_transect <- function(d,step) {
+ 	split_transect <- function(d, step) {
      
  	  x2 <- d #contient tout
 		g <- grep("deb|déb|fin",d[,"site"],ignore.case=TRUE)
@@ -45,8 +48,15 @@ SOMEC2ECSAS <- function(
 		step_sec <- 60 * as.numeric(unlist(strsplit(step, " "))[1])
 		
 		period <- as.POSIXct(x$date_heure,tz="GMT")
+
+		# period is incomplete, log error and skip transect
 		if (any(is.na(period))) {
-		  print(sprintf("error in transect %s from mission %s. Dates do not fit.", d$id_transect[1], d$mission[1]))
+		  errMessage <- "Dates do not fit"
+		  # Ugly hack to modify errors globally but the simplest way 
+		  errors[[errorCount]] <<- list(message = errMessage, transect = d$id_transect[1], mission = d$mission[1])
+		  errorCount <<- errorCount + 1
+		  print(sprintf("Error in transect %s from mission %s. %s. Transect skipped", d$id_transect[1], d$mission[1], errMessage))
+		        return(NULL)
 		  return(NULL)
 		}
 		temp <- seq(min(period), max(period) + step_sec, by = step,
@@ -112,8 +122,17 @@ SOMEC2ECSAS <- function(
 		        int
 		      }
 		    }
-		  }) 
-			res2<-data.frame(WatchIDOrig=res$WatchIDOrig[val],y,stringsAsFactors=FALSE)
+		  })
+		  # If observations are found but none are in transect throw and error and skip transect
+		  if(!any(!is.na(val))) {
+		    errMessage <- "Observations found do not match transect dates"
+		    errors[[errorCount]] <<- list(message = errMessage, transect = d$id_transect[1], mission = d$mission[1])
+		    errorCount <<- errorCount + 1
+		    print(sprintf("Error in transect %s from mission %s. %s. Transect skipped", d$id_transect[1], d$mission[1], errMessage))
+		    return(NULL)
+		  }
+
+		  res2<-data.frame(WatchIDOrig=res$WatchIDOrig[val],y,stringsAsFactors=FALSE)
 			res <- dplyr:::full_join(res2, res, type = "full", by = "WatchIDOrig")
 			names(res)[names(res) == "latitude"] <- "ObsLat"
 			names(res)[names(res) == "longitude"] <- "ObsLong"
@@ -154,6 +173,7 @@ SOMEC2ECSAS <- function(
  	mis <- sqlFetch(db, "missions", stringsAsFactors = FALSE)
  	sp <- sqlFetch(db, "Code espèces", stringsAsFactors = FALSE)
  	 
+ 	
 	# Let user select data based on the Saisie field
  	if (!is.null(typeSaisie)) {
  	  mis <- mis[mis$Saisie %in% typeSaisie, ]
@@ -237,6 +257,10 @@ SOMEC2ECSAS <- function(
   	head(ans)
   	cat(paste("Writing outfile", "\"", output, "\"", "to", collapse = " "))
   	write.table(ans, output, row.names = FALSE, sep=";", na="")
+	}
+	
+	if(saveErrors) {
+	  write.csv2(do.call(rbind, errors), paste(c(output, "_errors.csv"), collapse = "_"), row.names = FALSE)
 	}
 	ans$Distance <- ifelse(is.na(ans$Distance), "", ans$Distance)
 	ans
