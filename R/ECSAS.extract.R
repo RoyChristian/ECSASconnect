@@ -265,15 +265,22 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
 
 
   #merge and filter the tables for the watches
-  Watches2 <- join(join(join(join(watches, seastates, by="SeaStateID", type = "left"), observer, by="ObserverID"),
-                platform.name, by="PlatformID", type="left"),
-                platform.activity,by="PlatformTypeID",type="left") [,c("CruiseID","Program",
+  Watches2 <- join(
+                join(
+                  join(
+                    join(watches, seastates, by="SeaStateID", type = "left"), 
+                    observer, by="ObserverID"
+                  ),
+                  platform.name, by="PlatformID", type="left"
+                ),
+                platform.activity,by="PlatformTypeID",type="left"
+                ) [,c("CruiseID","Program",
                   "Atlantic", "Quebec", "Arctic", "ESRF", "AZMP", "FSRS", "StartDate", "EndDate", "WatchID", "TransectNo",
                   "ObserverName", "PlatformClass", "WhatCount", "TransNearEdge", "TransFarEdge","DistMeth",
                   "Date","Year","Month","Week","Day","StartTime",
                   "EndTime", "LatStart","LongStart", "LatEnd", "LongEnd", "PlatformSpeed",
                   "PlatformDir", "ObsLen", "WatchLenKm", "Snapshot","Experience",
-                  "Visibility", "Swell", "Windspeed", "Windforce", "Weather", "Glare", "IceType",
+                  "Visibility", "SeaState", "Swell", "Windspeed", "Windforce", "Weather", "Glare", "IceType",
                   "IceConc", "ObsSide", "ObsOutIn", "ObsHeight", "ScanType", "ScanDir")]
 
   ###Create the final table by joining the observations to the watches
