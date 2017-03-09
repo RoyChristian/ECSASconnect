@@ -8,6 +8,11 @@ Import data from the Eastern Canada Seabirds at Sea (ECSAS) database
 
 `Sys.setenv(JAVA_HOME = "C:/Program Files (x86)/ArcGIS/Desktop10.2/java/jre")`
 
+Version 0.6.5
+=======
+* Improvements to SOMEC2ECSAS
+* SeaState now appears in output again.
+
 Version 0.6.4
 =======
 * Changed default for distMeth to be c(14,20) to include by default watches where both perpendicular and radial distances were recorded 
