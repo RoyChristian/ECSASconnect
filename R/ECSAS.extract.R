@@ -15,7 +15,8 @@
 #'@param ecsas.drive Where is located the ECSAS Access database
 #'@param ecsas.file  What is the name of the ECSAS Access database
 #'@details
-#'The function will produce a data frame that will contains all the pertinent information.
+#'The function will produce a data frame that will contains all the pertinent information. Note that watches with no observations (the so called "zeros" are 
+#'included by default).
 #'@section Author:Christian Roy, Dave Fifield
 #'
 #'@seealso \code{\link{QC.extract}}
@@ -56,9 +57,7 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
   sub.program<- match.arg(sub.program, several.ok=TRUE) #Not sure how to make it check for all argument names
 
   ###setwd and open connection
-  wd<-getwd()
-  setwd(ecsas.drive)
-  channel1 <- odbcConnectAccess(ecsas.file, uid="")
+  channel1 <- odbcConnectAccess(file.path(ecsas.drive, ecsas.file), uid="")
 
   # generic where-clause start and end. "1=1" is a valid expression that does nothing but is syntactically
   # correct in case there are no other where conditions.
@@ -75,7 +74,7 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
   long.selection <- paste("AND ((tblWatch.LongStart)>=",long[1]," And (tblWatch.LongStart)<=",long[2],")",sep="")
 
   # SQL for distMeth
-  if (distMeth == "All"){
+  if (length(distMeth) == 1 && distMeth == "All"){
     distMeth.selection <- ""
   } else {
     distMeth.selection <- paste0("AND (",paste0(paste0("(tblWatch.DistMeth)=",distMeth),collapse=" OR "),")")
@@ -307,9 +306,6 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
     final.df <-droplevels(final.df)
   }
 
-  # Return to the working drive
-  setwd(wd)
-  
   # Export the final product
   return(droplevels(final.df))
   
