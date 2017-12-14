@@ -9,7 +9,7 @@
 #'@param obs.keep Name of the observer to keep for the extraction. The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").
 #'@param obs.exclude Name of the observer to exlude for the extraction.The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").
 #'@param sub.program From which sub.program the extraction must be made. Options are Quebec, Atlantic, both regions or all the observations. All the observations will inlcude the observations made in the PIROP program.
-#'@param intransect Should we keep only the birds counted on the transect or not.
+#'@param intransect Should we keep only the birds counted on the transect (if TRUE, the default) or extract all observations (if FALSE).
 #'@param distMeth Integer specifying the distance sampling method code (tblWatch.DistMeth in ECSAS). Default is c(14, 20) which includes all watches with perpendicular distanes for both flying and swimming birds.
 #'@param ecsas.drive Where is located the ECSAS Access database
 #'@param ecsas.file  What is the name of the ECSAS Access database
@@ -20,7 +20,7 @@
 #'@seealso \code{\link{QC.extract}}
 
 ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), obs.keep=NA, obs.exclude=NA,
-           sub.program=c("All","Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS"), intransect=T, distMeth = c(14, 20),
+           sub.program=c("All","Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS"), intransect=TRUE, distMeth = c(14, 20),
            ecsas.drive="C:/Users/christian/Dropbox/ECSAS",
            ecsas.file="Master ECSAS_backend v 3.31.mdb"){
 
