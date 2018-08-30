@@ -12,8 +12,8 @@
 #'@param intransect Should we keep only the birds counted on the transect (if TRUE, the default) or extract all observations (if FALSE).
 #'@param distMeth Integer specifying the distance sampling method code (tblWatch.DistMeth in ECSAS). Default is c(14, 20) which includes all watches
 #'   with perpendicular distanes for both flying and swimming birds. If "All", then observations from all distance sampling methods will be returned.
-#'@param ecsas.drive Where is located the ECSAS Access database
-#'@param ecsas.file  What is the name of the ECSAS Access database
+#'@param ecsas.drive path to folder containing the ECSAS Access database
+#'@param ecsas.file  name of the ECSAS Access database
 #'@details
 #'The function will produce a data frame that will contains all the pertinent information. Note that watches with no observations (the so called "zeros" are 
 #'included by default).
@@ -125,9 +125,9 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
     wrong.sp <-species[!species%in%specieInfo$Alpha]
     if (length(wrong.sp) > 0){
         if(length(wrong.sp) == 1){
-        stop(paste("species code", wrong.sp, "is not included in the database", sep = " "))
-      }else{
-        stop(paste("species codes", paste(wrong.sp, collapse = " and "), "are not included in the database", sep = " "))
+          stop(paste("species code", wrong.sp, "is not included in the database", sep = " "))
+        }else{
+          stop(paste("species codes", paste(wrong.sp, collapse = " and "), "are not included in the database", sep = " "))
       }
     }
 
