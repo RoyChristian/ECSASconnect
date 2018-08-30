@@ -48,7 +48,9 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
   intransect.selection <- ""  
   year.selection <- ""
   sp.selection <- ""
-  
+  distMeth.selection <- ""
+  selected.sub.program <- ""
+    
   ###Make sure arguments works with sub.programs
   sub.program.names<-c("Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS")
   if(any(is.na(match(sub.program,c(sub.program.names,"All"))))){
@@ -74,16 +76,12 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
   long.selection <- paste("AND ((tblWatch.LongStart)>=",long[1]," And (tblWatch.LongStart)<=",long[2],")",sep="")
 
   # SQL for distMeth
-  if (length(distMeth) == 1 && distMeth == "All"){
-    distMeth.selection <- ""
-  } else {
+  if (length(distMeth) != 1 || distMeth != "All"){
     distMeth.selection <- paste0("AND (",paste0(paste0("(tblWatch.DistMeth)=",distMeth),collapse=" OR "),")")
   }
 
   #write SQL selection for the different type of sub.programs
-  if(any(sub.program=="All")){
-    selected.sub.program <- ""
-  }else{
+  if(any(sub.program != "All")){
     selected.sub.program <- paste0("AND (",paste0(paste0("(tblCruise.",sub.program,")=TRUE"),collapse=" OR "),")")
   }
 
