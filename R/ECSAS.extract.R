@@ -8,7 +8,8 @@
 #'@param long Pair of coordinate giving the western and eastern limits of the range desired. Note that west longitude values must be negative.
 #'@param obs.keep Name of the observer to keep for the extraction. The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").
 #'@param obs.exclude Name of the observer to exlude for the extraction.The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").
-#'@param sub.program From which sub.program the extraction must be made. Options are Quebec, Atlantic, both regions or all the observations. All the observations will inlcude the observations made in the PIROP program.
+#'@param sub.program From which sub.program the extraction must be made. Options are Quebec, Atlantic, Arctic, ESRF, AZMP, FSES, or All
+#'All subprograms will inlcude the observations made in the PIROP program.
 #'@param intransect Should we keep only the birds counted on the transect (if TRUE, the default) or extract all observations (if FALSE).
 #'@param distMeth Integer specifying the distance sampling method code (tblWatch.DistMeth in ECSAS). Default is c(14, 20) which includes all watches
 #'   with perpendicular distanes for both flying and swimming birds. If "All", then observations from all distance sampling methods will be returned.
@@ -51,12 +52,12 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
   distMeth.selection <- ""
   selected.sub.program <- ""
     
-  ###Make sure arguments works with sub.programs
+  ### Make sure arguments works with sub.programs
   sub.program.names<-c("Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS")
   if(any(is.na(match(sub.program,c(sub.program.names,"All"))))){
      stop(paste("Unknown sub.program(s) specified. Sub-program should be one of: ",paste(sub.program.names,collapse=" "),"or All"))
   }
-  sub.program<- match.arg(sub.program, several.ok=TRUE) #Not sure how to make it check for all argument names
+  sub.program <- match.arg(sub.program, several.ok=TRUE) #Not sure how to make it check for all argument names
 
   ###setwd and open connection
   channel1 <- odbcConnectAccess(file.path(ecsas.drive, ecsas.file), uid="")
