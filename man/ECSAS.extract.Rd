@@ -6,7 +6,7 @@
 \usage{
 ECSAS.extract(species, years, lat = c(-90, 90), long = c(-180, 180),
   obs.keep = NA, obs.exclude = NA, sub.program = c("All", "Atlantic",
-  "Quebec", "Arctic", "ESRF", "AZMP", "FSRS"), intransect = T,
+  "Quebec", "Arctic", "ESRF", "AZMP", "FSRS"), intransect = TRUE,
   distMeth = c(14, 20), ecsas.drive = "C:/Users/christian/Dropbox/ECSAS",
   ecsas.file = "Master ECSAS_backend v 3.31.mdb")
 }
@@ -23,26 +23,29 @@ ECSAS.extract(species, years, lat = c(-90, 90), long = c(-180, 180),
 
 \item{obs.exclude}{Name of the observer to exlude for the extraction.The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").}
 
-\item{sub.program}{From which sub.program the extraction must be made. Options are Quebec, Atlantic, both regions or all the observations. All the observations will inlcude the observations made in the PIROP program.}
+\item{sub.program}{From which sub.program the extraction must be made. Options are Quebec, Atlantic, Arctic, ESRF, AZMP, FSES, or All
+All subprograms will inlcude the observations made in the PIROP program.}
 
-\item{intransect}{Should we keep only the birds counted on the transect or not.}
+\item{intransect}{Should we keep only the birds counted on the transect (if TRUE, the default) or extract all observations (if FALSE).}
 
-\item{distMeth}{Integer specifying the distance sampling method code (tblWatch.DistMeth in ECSAS). Default is c(14, 20) which includes all watches with perpendicular distanes for both flying and swimming birds.}
+\item{distMeth}{Integer specifying the distance sampling method code (tblWatch.DistMeth in ECSAS). Default is c(14, 20) which includes all watches
+with perpendicular distanes for both flying and swimming birds. If "All", then observations from all distance sampling methods will be returned.}
 
-\item{ecsas.drive}{Where is located the ECSAS Access database}
+\item{ecsas.drive}{path to folder containing the ECSAS Access database}
 
-\item{ecsas.file}{What is the name of the ECSAS Access database}
+\item{ecsas.file}{name of the ECSAS Access database}
 }
 \description{
 The function will connect to the Access database, create a series of queries and import the desired information in a data frame.
 }
 \details{
-The function will produce a data frame that will contains all the pertinent information.
+The function will produce a data frame that will contains all the pertinent information. Note that watches with no observations (the so called "zeros" are 
+included by default).
 }
 \section{Author}{
 Christian Roy, Dave Fifield
 }
+
 \seealso{
 \code{\link{QC.extract}}
 }
-
