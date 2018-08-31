@@ -1,4 +1,6 @@
-- create a generic way of dealing with where subclauses that require multiple matches (like species). Will need
+- add "survey type" (or some such) arg to ecsas.extract to specify ship (default) or aerial.
+- add facility to insert aerial data
+- create a generic way of dealing with WHERE subclauses that require multiple matches (like species). Will need
 	this often.
 - deal with cruises where there were two observers (one on each side)
 - combine the multiple queries for watch, sighting, etc into one
