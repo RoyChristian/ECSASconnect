@@ -53,14 +53,15 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
   selected.sub.program <- ""
     
   ### Make sure arguments works with sub.programs
-  sub.program.names<-c("Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS")
-  if(any(is.na(match(sub.program,c(sub.program.names,"All"))))){
-     stop(paste("Unknown sub.program(s) specified. Sub-program should be one of: ",paste(sub.program.names,collapse=" "),"or All"))
+  sub.program.names <- c("Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS")
+  if(any(is.na(match(sub.program, c(sub.program.names,"All"))))){
+     stop(paste("Unknown sub.program(s) specified. Sub-program should be one of: ",
+                paste(sub.program.names, collapse=" "), "or All"))
   }
   sub.program <- match.arg(sub.program, several.ok=TRUE) #Not sure how to make it check for all argument names
 
   ###setwd and open connection
-  channel1 <- odbcConnectAccess(file.path(ecsas.drive, ecsas.file), uid="")
+  channel1 <- RODBC::odbcConnectAccess(file.path(ecsas.drive, ecsas.file), uid="")
 
   # generic where-clause start and end. "1=1" is a valid expression that does nothing but is syntactically
   # correct in case there are no other where conditions.
@@ -73,17 +74,17 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
   }
 
   #write SQL selection for latitude and longitude
-  lat.selection <-  paste("AND ((tblWatch.LatStart)>=",lat[1]," And (tblWatch.LatStart)<=",lat[2],")",sep="")
-  long.selection <- paste("AND ((tblWatch.LongStart)>=",long[1]," And (tblWatch.LongStart)<=",long[2],")",sep="")
+  lat.selection <-  paste("AND ((tblWatch.LatStart)>=", lat[1], " And (tblWatch.LatStart)<=", lat[2], ")", sep="")
+  long.selection <- paste("AND ((tblWatch.LongStart)>=", long[1], " And (tblWatch.LongStart)<=", long[2], ")", sep="")
 
   # SQL for distMeth
   if (length(distMeth) != 1 || distMeth != "All"){
-    distMeth.selection <- paste0("AND (",paste0(paste0("(tblWatch.DistMeth)=",distMeth),collapse=" OR "),")")
+    distMeth.selection <- paste0("AND (",paste0(paste0("(tblWatch.DistMeth)=", distMeth), collapse= " OR "), ")")
   }
 
   #write SQL selection for the different type of sub.programs
   if(any(sub.program != "All")){
-    selected.sub.program <- paste0("AND (",paste0(paste0("(tblCruise.",sub.program,")=TRUE"),collapse=" OR "),")")
+    selected.sub.program <- paste0("AND (", paste0(paste0("(tblCruise.", sub.program, ")=TRUE"), collapse=" OR "), ")")
   }
 
   #write SQL selection for year
@@ -91,7 +92,7 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
     if(length(years) == 1)
       year.selection <- paste0("AND ((DatePart('yyyy',[Date])) = ", years, ")")
     else if (length(years) == 2)
-      year.selection <- paste0("AND ((DatePart('yyyy',[Date]))Between ",years[1]," And ",years[2],")")
+      year.selection <- paste0("AND ((DatePart('yyyy',[Date]))Between ", years[1], " And ", years[2], ")")
     else
       stop("Years must be either a single number or a vector of two numbers.")
   }
@@ -113,7 +114,7 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
   )
 
   #Excute query for species
-  specieInfo <-  sqlQuery(channel1, query.species)
+  specieInfo <-  RODBC::sqlQuery(channel1, query.species)
   
   # handle species specification
   if (!missing(species)) {
@@ -121,7 +122,7 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
     species <- toupper(species)
 
     ### make sure the species are in the database.
-    wrong.sp <-species[!species%in%specieInfo$Alpha]
+    wrong.sp <- species[!species %in% specieInfo$Alpha]
     if (length(wrong.sp) > 0){
         if(length(wrong.sp) == 1){
           stop(paste("species code", wrong.sp, "is not included in the database", sep = " "))
@@ -132,7 +133,7 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
 
     # Remove speciesinfo records where Alpha is NA, since they can't currently be specified for selection anyway. This helps
     # for the indexing below.
-    specieInfo <- dplyr:::filter(specieInfo, !is.na(Alpha))
+    specieInfo <- dplyr::filter(specieInfo, !is.na(Alpha))
     
     # Form the WHERE clause that is based on the species number instead of the alpha code
     nspecies <- paste0(sapply(1:length(species), function(i) {
@@ -170,7 +171,7 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
                                distMeth.selection,
                                year.selection,
                                where.end,
-                               sep=" "
+                               sep = " "
                         )
                     )
 
@@ -199,7 +200,7 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
                                 "tblWatch.PlatformDir",
                                 "tblWatch.ObsLen",
                                 "tblWatch.PlatformActivity",
-                                "([PlatformSpeed]*[ObsLen]/60*1.852) AS [WatchLenKm]",
+                                "([PlatformSpeed] * [ObsLen] / 60 * 1.852) AS [WatchLenKm]",
                                 "tblWatch.Snapshot",
                                 "tblWatch.ObservationType AS [Experience]",
                                 "tblCruise.PlatformType AS [PlatformTypeID]",
@@ -227,7 +228,7 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
                                 "DatePart('yyyy',[Date]) AS [Year]",
                                 "DatePart('m',[Date]) AS [Month]",
                                 "DatePart('ww',[Date]) AS Week",
-                                "DatePart('y',[Date]) AS [Day]", sep=", "),
+                                "DatePart('y',[Date]) AS [Day]", sep = ", "),
                           "FROM tblCruise INNER JOIN tblWatch ON tblCruise.CruiseID = tblWatch.CruiseID",
                           paste(where.start,
                                 lat.selection,
@@ -242,25 +243,25 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
 
 
   #Import all the tables needed
-  Sighting <- sqlQuery(channel1, query.sighting )
-  watches <- sqlQuery(channel1, query.watches)
-  distance <- sqlFetch(channel1, "lkpDistanceCenters")
-  observer <- sqlFetch(channel1, "lkpObserver")
-  platform.name <- sqlFetch(channel1, "lkpPlatform")
-  platform.activity <- sqlFetch(channel1, "lkpPlatformType")
-  seastates <- sqlFetch(channel1, "lkpSeastate")
+  Sighting <- RODBC::sqlQuery(channel1, query.sighting )
+  watches <- RODBC::sqlQuery(channel1, query.watches)
+  distance <- RODBC::sqlFetch(channel1, "lkpDistanceCenters")
+  observer <- RODBC::sqlFetch(channel1, "lkpObserver")
+  platform.name <- RODBC::sqlFetch(channel1, "lkpPlatform")
+  platform.activity <- RODBC::sqlFetch(channel1, "lkpPlatformType")
+  seastates <- RODBC::sqlFetch(channel1, "lkpSeastate")
   #close connection
-  odbcCloseAll()
+  RODBC::odbcCloseAll()
 
   #name change for the second column
   names(platform.name)[2] <- "PlatformName"
 
   # rename to do matching on seastates below.
-  watches <- plyr:::rename(watches, c("SeaState" = "SeaStateID"))
+  watches <- plyr::rename(watches, c("SeaState" = "SeaStateID"))
 
   #merge and filter the tables for the sigthings
-  Sighting2 <- join(join(Sighting,specieInfo,by="SpecInfoID",type="left"),
-                    distance,by="DistanceCode") [,c("FlockID", "WatchID","Alpha","English","Latin","Class",
+  Sighting2 <- plyr::join(plyr::join(Sighting, specieInfo, by = "SpecInfoID", type = "left"),
+                    distance, by = "DistanceCode") [,c("FlockID", "WatchID","Alpha","English","Latin","Class",
                                                     "Seabird", "Waterbird","ObsLat","ObsLong","ObsTime","Distance","DistanceCode",
                                                     "InTransect","Association", "Behaviour","FlightDir","FlySwim",
                                                     "Count","Age","Plumage","Sex")]
@@ -268,15 +269,15 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
 
 
   #merge and filter the tables for the watches
-  Watches2 <- join(
-                join(
-                  join(
-                    join(watches, seastates, by="SeaStateID", type = "left"), 
-                    observer, by="ObserverID"
+  Watches2 <- plyr::join(
+                plyr::join(
+                  plyr::join(
+                    plyr::join(watches, seastates, by="SeaStateID", type = "left"), 
+                    observer, by = "ObserverID"
                   ),
-                  platform.name, by="PlatformID", type="left"
+                  platform.name, by = "PlatformID", type="left"
                 ),
-                platform.activity,by="PlatformTypeID",type="left"
+                platform.activity, by = "PlatformTypeID",type="left"
                 ) [,c("CruiseID","Program",
                   "Atlantic", "Quebec", "Arctic", "ESRF", "AZMP", "FSRS", "StartDate", "EndDate", "WatchID", "TransectNo",
                   "ObserverName", "PlatformClass", "WhatCount", "TransNearEdge", "TransFarEdge","DistMeth",
@@ -287,22 +288,22 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
                   "IceConc", "ObsSide", "ObsOutIn", "ObsHeight", "ScanType", "ScanDir")]
 
   ###Create the final table by joining the observations to the watches
-  final.df <- join(Watches2, Sighting2, by="WatchID", type="left", match="all")
+  final.df <- plyr::join(Watches2, Sighting2, by = "WatchID", type = "left", match = "all")
 
   #Change the way the observer names are stored in the table
   final.df$ObserverName <- as.factor(sapply(1:nrow( final.df),
-                                        function(i){gsub(", ","_",as.character(final.df$ObserverName[i]) )}))
+                                        function(i){gsub(", " , "_", as.character(final.df$ObserverName[i]) )}))
 
   #Select or exlude the observers
   if(!is.na(obs.exclude)){
     keep1 <- setdiff(levels(final.df$ObserverName), obs.exclude)
-    final.df <- subset(final.df, final.df$ObserverName%in%keep1)
-    final.df <-droplevels(final.df)
+    final.df <- subset(final.df, final.df$ObserverName %in% keep1)
+    final.df <- droplevels(final.df)
   }
 
   if(!is.na(obs.keep)){
-    final.df <- subset(final.df, final.df$ObserverName%in%obs.keep)
-    final.df <-droplevels(final.df)
+    final.df <- subset(final.df, final.df$ObserverName %in% obs.keep)
+    final.df <- droplevels(final.df)
   }
 
   # Export the final product
@@ -310,5 +311,3 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
   
   #End
 }
-
-
