@@ -8,7 +8,6 @@ new_mission<-function(
   output="new_mission"
   
 ){
-  
   ext<-if(is.null(input)){".data"}else{substr(input,nchar(input)-4,nchar(input))}
   if(!is.null(input) & !any(grep("/",input))){
     input<-paste0(getwd(),"/",input)  	
@@ -28,22 +27,27 @@ new_mission<-function(
     mis<-sqlFetch(db,"missions",stringsAsFactors=FALSE,max=1)
     f<-list(obs,tran,mis)
     names(f)<-sheets
-    sapply(sheets,function(i){
-      write.xlsx(f[[i]][NA,],paste0(path,"/",output,".xlsx"),sheetName=i,showNA=FALSE,append=TRUE,row.names=FALSE)
-    })    
+    write.xlsx(f, paste0(path,"/",output,".xlsx"), row.names=FALSE)
   }else{
     if(ext==".xlsx"){
       names<-as.data.frame(read_excel(input))
     }else{
       data(new_names)
-      names<-new_names
+      nms<-new_names
     }
-    sapply(sheets,function(i){
-      n<-unique(names[names$table==i,"new_name"]) #take out duplicates because of multiple names
-      f<-as.data.frame(matrix(rep(NA,length(n)),ncol=length(n)))
-      names(f)<-n
-      write.xlsx(f,paste0(path,"/",output,".xlsx"),sheetName=i,showNA=FALSE,append=TRUE,row.names=FALSE)
-    })
+    sheet.list <- lapply(sheets, create_worksheet, nms, path, output)
+    names(sheet.list) <- sheets
+    write.xlsx(sheet.list, paste0(path,"/",output,".xlsx"), row.names=FALSE)
   }
   cat("File created at ",paste0(path,"/",output,".xlsx"))
 }
+
+# return a dataframe corresponding to a worksheet
+create_worksheet <- function(i, nms, path, output){
+  n<-unique(nms[nms$table==i,"new_name"]) #take out duplicates because of multiple names
+  f<-as.data.frame(matrix(rep(NA,length(n)),ncol=length(n)))
+  names(f)<-n
+  f
+}
+
+

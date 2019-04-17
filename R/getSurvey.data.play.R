@@ -1,3 +1,5 @@
+if (FALSE) {
+
 ## 07Jul2015
 ## read in and merge data from aerial surveys
 require(ggplot2)
@@ -366,3 +368,4 @@ p + geom_path(aes(group=group)) +
               aes(lon, lat, colour = factor(species), size = count)) +
   scale_size_area()
 
+}
