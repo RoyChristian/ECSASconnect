@@ -16,7 +16,7 @@
 #'@param ecsas.drive path to folder containing the ECSAS Access database
 #'@param ecsas.file  name of the ECSAS Access database
 #'@details
-#'The function will produce a data frame that will contains all the pertinent information. Note that watches with no observations (the so called "zeros" are 
+#'The function will produce a data frame that contains all the pertinent information. Note that watches with no observations (the so called "zeros" are 
 #'included by default).
 #'@section Author:Christian Roy, Dave Fifield
 #'
