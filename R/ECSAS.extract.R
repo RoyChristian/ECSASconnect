@@ -13,6 +13,7 @@
 #'@param intransect Should we keep only the birds counted on the transect (if TRUE, the default) or extract all observations (if FALSE).
 #'@param distMeth Integer specifying the distance sampling method code (tblWatch.DistMeth in ECSAS). Default is c(14, 20) which includes all watches
 #'   with perpendicular distanes for both flying and swimming birds. If "All", then observations from all distance sampling methods will be returned.
+#'@param ecsas.path (default NULL) full pathname to the ECSAS database. If NULL, the path is built from \code{ecsas.drive} and \code{ecsas.file}.
 #'@param ecsas.drive path to folder containing the ECSAS Access database
 #'@param ecsas.file  name of the ECSAS Access database
 #'@details
@@ -24,8 +25,8 @@
 
 ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), obs.keep=NA, obs.exclude=NA,
            sub.program=c("All","Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS"), intransect=TRUE, distMeth = c(14, 20),
-           ecsas.drive="C:/Users/christian/Dropbox/ECSAS",
-           ecsas.file="Master ECSAS_backend v 3.31.mdb"){
+           ecsas.path = NULL,
+           ecsas.drive="C:/Users/christian/Dropbox/ECSAS", ecsas.file="Master ECSAS_backend v 3.31.mdb", debug = FALSE){
 
 # debugging
 # rm(list=ls())
@@ -41,6 +42,8 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
 # obs.exclude <- NA
 # obs.keep <- NA
 
+  if(debug) browser()
+  
   # test for 32-bit architecture
   if (Sys.getenv("R_ARCH") != "/i386")
     stop("You are not running a 32-bit R session. You must run ECSAS.extract in a 32-bit R session due to limitations in the RODBC Access driver.")
@@ -61,8 +64,12 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
   sub.program <- match.arg(sub.program, several.ok=TRUE) #Not sure how to make it check for all argument names
 
   ###setwd and open connection
-  channel1 <- RODBC::odbcConnectAccess(file.path(ecsas.drive, ecsas.file), uid="")
-
+  if(!is.null(ecsas.path)) {
+    channel1 <- RODBC::odbcConnectAccess(ecsas.path, uid="")
+  } else {
+    channel1 <- RODBC::odbcConnectAccess(file.path(ecsas.drive, ecsas.file), uid="")
+  }
+  
   # generic where-clause start and end. "1=1" is a valid expression that does nothing but is syntactically
   # correct in case there are no other where conditions.
   where.start <-  "WHERE ((1=1)"
@@ -84,7 +91,7 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
 
   #write SQL selection for the different type of sub.programs
   if(any(sub.program != "All")){
-    selected.sub.program <- paste0("AND (", paste0(paste0("(tblCruise.", sub.program, ")=TRUE"), collapse=" OR "), ")")
+    selected.sub.program <- paste0("AND (", paste0(paste0("(tblCruise.", sub.program[sub.program != "All"], ")=TRUE"), collapse=" OR "), ")")
   }
 
   #write SQL selection for year
