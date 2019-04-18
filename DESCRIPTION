@@ -15,7 +15,8 @@ Depends:
     plyr,
     RODBC,
     readxl,
-    openxlsx
+    openxlsx,
+    ensurer
 License: GPL-2
 Encoding: UTF-8
 RoxygenNote: 6.0.1

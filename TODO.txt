@@ -1,3 +1,7 @@
+- add option to convert all fields with lookup tables to their proper values. Make this optional in order to protect legacy code that
+  depends on old behaviour?? Thinking of any code that was used to extract data for the Urgence App. 
+- change name of platform.activity variable to platform.type. Confusing with PlatformActivity
+- add error checking for data returned from queries
 - add "survey type" (or some such) arg to ecsas.extract to specify ship (default) or aerial.
 - add facility to insert aerial data
 - create a generic way of dealing with WHERE subclauses that require multiple matches (like species). Will need
@@ -13,7 +17,7 @@
 - add "classType" argument ie. Bird, Mammal, etc
 - figure out if database is open for exclusive use, 
 - come up with a more generic method for specifying filtering options instead of adding a separate param everytime to
-ECSAS.extract. Maybe a list of name=value pairs or some such??
+ECSAS.extract. Maybe a list of name=value pairs or some such?? Or just don't bother and do filtering in calling program.
 - make variable name structure consistent (either camelCase or dotted.separation)
 - apply Hadley Wickhams style guide (http://adv-r.had.co.nz/Style.html) 
 - add unit tests

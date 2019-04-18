@@ -1,5 +1,5 @@
 #' @export
-#'@title Extract the information for the Global ECSAS database
+#'@title Extract data from ECSAS database
 #'
 #'@description The function will connect to the Access database, create a series of queries and import the desired information in a data frame.
 #'@param species Optional. Alpha code (or vector of Alpha codes, e.g., c("COMU,"TBMU", "UNMU")) for the species desired in the extraction.
@@ -121,7 +121,7 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
   )
 
   #Excute query for species
-  specieInfo <-  RODBC::sqlQuery(channel1, query.species)
+  specieInfo <-  RODBC::sqlQuery(channel1, query.species) %>% ensure_data_is_returned 
   
   # handle species specification
   if (!missing(species)) {
@@ -205,6 +205,7 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
                                 "tblWatch.LongEnd",
                                 "tblWatch.PlatformSpeed",
                                 "tblWatch.PlatformDir",
+                                "tblWatch.PlatformDirDeg",
                                 "tblWatch.ObsLen",
                                 "tblWatch.PlatformActivity",
                                 "([PlatformSpeed] * [ObsLen] / 60 * 1.852) AS [WatchLenKm]",
@@ -249,14 +250,14 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
                           sep=" ")
 
 
-  #Import all the tables needed
-  Sighting <- RODBC::sqlQuery(channel1, query.sighting )
-  watches <- RODBC::sqlQuery(channel1, query.watches)
-  distance <- RODBC::sqlFetch(channel1, "lkpDistanceCenters")
-  observer <- RODBC::sqlFetch(channel1, "lkpObserver")
-  platform.name <- RODBC::sqlFetch(channel1, "lkpPlatform")
-  platform.activity <- RODBC::sqlFetch(channel1, "lkpPlatformType")
-  seastates <- RODBC::sqlFetch(channel1, "lkpSeastate")
+  #Import all the tables needed - XXX need to add error checking. See approach in PIT tag dataase package.
+  Sighting <- RODBC::sqlQuery(channel1, query.sighting) %>% ensure_data_is_returned 
+  watches <- RODBC::sqlQuery(channel1, query.watches) %>% ensure_data_is_returned 
+  distance <- RODBC::sqlFetch(channel1, "lkpDistanceCenters") %>% ensure_data_is_returned 
+  observer <- RODBC::sqlFetch(channel1, "lkpObserver") %>% ensure_data_is_returned 
+  platform.name <- RODBC::sqlFetch(channel1, "lkpPlatform") %>% ensure_data_is_returned 
+  platform.activity <- RODBC::sqlFetch(channel1, "lkpPlatformType") %>% ensure_data_is_returned 
+  seastates <- RODBC::sqlFetch(channel1, "lkpSeastate") %>% ensure_data_is_returned 
   #close connection
   RODBC::odbcCloseAll()
 
@@ -285,12 +286,12 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
                   platform.name, by = "PlatformID", type="left"
                 ),
                 platform.activity, by = "PlatformTypeID",type="left"
-                ) [,c("CruiseID","Program",
+                ) [,c("CruiseID","Program", "PlatformName",
                   "Atlantic", "Quebec", "Arctic", "ESRF", "AZMP", "FSRS", "StartDate", "EndDate", "WatchID", "TransectNo",
                   "ObserverName", "PlatformClass", "WhatCount", "TransNearEdge", "TransFarEdge","DistMeth",
                   "Date","Year","Month","Week","Day","StartTime",
                   "EndTime", "LatStart","LongStart", "LatEnd", "LongEnd", "PlatformSpeed",
-                  "PlatformDir", "ObsLen", "WatchLenKm", "Snapshot","Experience",
+                  "PlatformDir", "PlatformDirDeg", "PlatformActivity", "ObsLen", "WatchLenKm", "Snapshot","Experience",
                   "Visibility", "SeaState", "Swell", "Windspeed", "Windforce", "Weather", "Glare", "IceType",
                   "IceConc", "ObsSide", "ObsOutIn", "ObsHeight", "ScanType", "ScanDir")]
 
