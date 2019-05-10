@@ -1,5 +1,6 @@
+- add function to create transects from individual watches  - started
 - add option to convert all fields with lookup tables to their proper values. Make this optional in order to protect legacy code that
-  depends on old behaviour?? Thinking of any code that was used to extract data for the Urgence App. 
+  depends on old behaviour?? Thinking of any code that was used to extract data for the Urgence App. Was there any?
 - change name of platform.activity variable to platform.type. Confusing with PlatformActivity
 - add error checking for data returned from queries
 - add "survey type" (or some such) arg to ecsas.extract to specify ship (default) or aerial.

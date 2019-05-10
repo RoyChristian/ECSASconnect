@@ -2,13 +2,14 @@
 % Please edit documentation in R/ECSAS.extract.R
 \name{ECSAS.extract}
 \alias{ECSAS.extract}
-\title{Extract the information for the Global ECSAS database}
+\title{Extract data from ECSAS database}
 \usage{
 ECSAS.extract(species, years, lat = c(-90, 90), long = c(-180, 180),
   obs.keep = NA, obs.exclude = NA, sub.program = c("All", "Atlantic",
   "Quebec", "Arctic", "ESRF", "AZMP", "FSRS"), intransect = TRUE,
-  distMeth = c(14, 20), ecsas.drive = "C:/Users/christian/Dropbox/ECSAS",
-  ecsas.file = "Master ECSAS_backend v 3.31.mdb")
+  distMeth = c(14, 20), ecsas.path = NULL,
+  ecsas.drive = "C:/Users/christian/Dropbox/ECSAS",
+  ecsas.file = "Master ECSAS_backend v 3.31.mdb", debug = FALSE)
 }
 \arguments{
 \item{species}{Optional. Alpha code (or vector of Alpha codes, e.g., c("COMU,"TBMU", "UNMU")) for the species desired in the extraction.}
@@ -31,6 +32,8 @@ All subprograms will inlcude the observations made in the PIROP program.}
 \item{distMeth}{Integer specifying the distance sampling method code (tblWatch.DistMeth in ECSAS). Default is c(14, 20) which includes all watches
 with perpendicular distanes for both flying and swimming birds. If "All", then observations from all distance sampling methods will be returned.}
 
+\item{ecsas.path}{(default NULL) full pathname to the ECSAS database. If NULL, the path is built from \code{ecsas.drive} and \code{ecsas.file}.}
+
 \item{ecsas.drive}{path to folder containing the ECSAS Access database}
 
 \item{ecsas.file}{name of the ECSAS Access database}
@@ -39,7 +42,7 @@ with perpendicular distanes for both flying and swimming birds. If "All", then o
 The function will connect to the Access database, create a series of queries and import the desired information in a data frame.
 }
 \details{
-The function will produce a data frame that will contains all the pertinent information. Note that watches with no observations (the so called "zeros" are 
+The function will produce a data frame that contains all the pertinent information. Note that watches with no observations (the so called "zeros" are 
 included by default).
 }
 \section{Author}{
