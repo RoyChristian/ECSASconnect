@@ -1,3 +1,4 @@
+- add (at least) the lat/long to the SQL to cut down on amount of data return. and/or do joins in SQL to speed up
 - add function to create transects from individual watches  - started
 - add option to convert all fields with lookup tables to their proper values. Make this optional in order to protect legacy code that
   depends on old behaviour?? Thinking of any code that was used to extract data for the Urgence App. Was there any?

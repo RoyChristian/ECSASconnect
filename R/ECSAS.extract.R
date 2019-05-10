@@ -208,7 +208,6 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
                                 "tblWatch.PlatformDirDeg",
                                 "tblWatch.ObsLen",
                                 "tblWatch.PlatformActivity",
-                                "([PlatformSpeed] * [ObsLen] / 60 * 1.852) AS [WatchLenKm]",
                                 "tblWatch.Snapshot",
                                 "tblWatch.ObservationType AS [Experience]",
                                 "tblCruise.PlatformType AS [PlatformTypeID]",
@@ -250,7 +249,7 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
                           sep=" ")
 
 
-  #Import all the tables needed - XXX need to add error checking. See approach in PIT tag dataase package.
+  #Import all the tables needed
   Sighting <- RODBC::sqlQuery(channel1, query.sighting) %>% ensure_data_is_returned 
   watches <- RODBC::sqlQuery(channel1, query.watches) %>% ensure_data_is_returned 
   distance <- RODBC::sqlFetch(channel1, "lkpDistanceCenters") %>% ensure_data_is_returned 
@@ -264,8 +263,14 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
   #name change for the second column
   names(platform.name)[2] <- "PlatformName"
 
-  # rename to do matching on seastates below.
-  watches <- plyr::rename(watches, c("SeaState" = "SeaStateID"))
+  # Calculate watch length in km via dead reconing if start and end positions are not avail, otherwise use ellipsoid method.
+  # Note use of more accurate CalcDurMin rather than the (integer) ObsLen
+  watches  %<>% 
+    dplyr::mutate(CalcDurMin = (as.numeric(EndTime - StartTime))/60,
+                  WatchLenKm = dplyr::case_when(is.na(LatStart) | is.na(LongStart) | is.na(LatEnd) | is.na(LongEnd) ~ 
+                                    (PlatformSpeed * CalcDurMin / 60 * 1.852),
+                                  TRUE ~ geosphere::distGeo(cbind(LongStart, LatStart), cbind(LongEnd,  LatEnd))/1000)) %>% 
+    dplyr::rename(SeaStateID = SeaState)
 
   #merge and filter the tables for the sigthings
   Sighting2 <- plyr::join(plyr::join(Sighting, specieInfo, by = "SpecInfoID", type = "left"),
@@ -289,8 +294,8 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
                 ) [,c("CruiseID","Program", "PlatformName",
                   "Atlantic", "Quebec", "Arctic", "ESRF", "AZMP", "FSRS", "StartDate", "EndDate", "WatchID", "TransectNo",
                   "ObserverName", "PlatformClass", "WhatCount", "TransNearEdge", "TransFarEdge","DistMeth",
-                  "Date","Year","Month","Week","Day","StartTime",
-                  "EndTime", "LatStart","LongStart", "LatEnd", "LongEnd", "PlatformSpeed",
+                  "Date","Year","Month","Week","Day","StartTime", "EndTime", "CalcDurMin",
+                  "LatStart","LongStart", "LatEnd", "LongEnd", "PlatformSpeed",
                   "PlatformDir", "PlatformDirDeg", "PlatformActivity", "ObsLen", "WatchLenKm", "Snapshot","Experience",
                   "Visibility", "SeaState", "Swell", "Windspeed", "Windforce", "Weather", "Glare", "IceType",
                   "IceConc", "ObsSide", "ObsOutIn", "ObsHeight", "ScanType", "ScanDir")]

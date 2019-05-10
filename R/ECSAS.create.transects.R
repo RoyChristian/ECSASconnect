@@ -75,19 +75,21 @@ ECSAS.create.transects <- function(dat, angle.thresh = NULL, max.lag = 10, debug
     if(is.na(dat[i, "tr.id"]))
       dat[i, "tr.id"] <- tr.id
   }
+
+  if(debug) browser()
   
   # add a final point at end of each transect
   dat <- split(dat, dat$tr.id) %>% 
     purrr::map_df(add.final.point) %>% 
     dplyr::mutate(save.lat = LatStart,
            save.long = LongStart) # save from removal by coordinates()
-  
+
   # create lines object
   sp::coordinates(dat) <- ~ LongStart + LatStart
   
   lines <- dat %>% 
-    split(dat$tr.id) %>% 
-    lapply(function(x) sp::Lines(list(sp::Line(coordinates(x))), x$tr.id[1L])) %>% 
+    sp::split(dat$tr.id) %>% 
+    lapply(function(x) sp::Lines(list(sp::Line(sp::coordinates(x))), x$tr.id[1L])) %>% 
     sp::SpatialLines()
   
   # create data row for each transect and create spatialLinesDataFrame
