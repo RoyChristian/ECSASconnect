@@ -39,16 +39,16 @@ ECSAS.create.transects <- function(dat, angle.thresh = NULL, max.lag = 10, debug
     dplyr::mutate(timelag = time_length(StartTime - lag(EndTime), unit = "minutes"))
   
   #init
-  dat$tr.id <- NA
-  tr.id <- 1
+  dat$Sample.Label <- NA_integer_
+  Sample.Label <- 1L
   cur.obs <- dat$ObserverName[1]
   cur.dir <- dat$PlatformDir[1]
   cur.ves <- dat$PlatformName[1]
   cur.day <- dat$Date[1]
   
-  # start assigning tr.id until one of day, observer, direction or vessel changes
+  # start assigning Sample.Label until one of day, observer, direction or vessel changes
   for (i in 1:nrow(dat)){
-#    if(tr.id == 140) browser()
+#    if(Sample.Label == 140) browser()
     
     row <- dat[i,]
 
@@ -65,21 +65,21 @@ ECSAS.create.transects <- function(dat, angle.thresh = NULL, max.lag = 10, debug
     
     if(cur.obs != row$ObserverName || cur.dir != row$PlatformDir || cur.ves != row$PlatformName || cur.day != row$Date ||
        (!is.na(row$timelag) && row$timelag > max.lag)){
-      tr.id <- tr.id + 1
+      Sample.Label <- Sample.Label + 1L
       cur.obs <- row$ObserverName
       cur.dir <- row$PlatformDir
       cur.ves <- row$PlatformName
       cur.day <- row$Date
     }  
     
-    if(is.na(dat[i, "tr.id"]))
-      dat[i, "tr.id"] <- tr.id
+    if(is.na(dat[i, "Sample.Label"]))
+      dat[i, "Sample.Label"] <- Sample.Label
   }
 
   if(debug) browser()
   
   # add a final point at end of each transect
-  dat <- split(dat, dat$tr.id) %>% 
+  dat <- split(dat, dat$Sample.Label) %>% 
     purrr::map_df(add.final.point) %>% 
     dplyr::mutate(save.lat = LatStart,
            save.long = LongStart) # save from removal by coordinates()
@@ -88,19 +88,19 @@ ECSAS.create.transects <- function(dat, angle.thresh = NULL, max.lag = 10, debug
   sp::coordinates(dat) <- ~ LongStart + LatStart
   
   lines <- dat %>% 
-    sp::split(dat$tr.id) %>% 
-    lapply(function(x) sp::Lines(list(sp::Line(sp::coordinates(x))), x$tr.id[1L])) %>% 
+    sp::split(dat$Sample.Label) %>% 
+    lapply(function(x) sp::Lines(list(sp::Line(sp::coordinates(x))), x$Sample.Label[1L])) %>% 
     sp::SpatialLines()
   
   # create data row for each transect and create spatialLinesDataFrame
   data <- dat@data %>% 
-    dplyr::group_by(tr.id) %>% 
+    dplyr::group_by(Sample.Label) %>% 
     dplyr::summarize(Date = unique(Date),
               StartTime = min(as.POSIXct(StartTime, format="%H:%M:%S")),
               EndTime = max(as.POSIXct(EndTime, format="%H:%M:%S")),
               ObserverName = unique(ObserverName),
               PlatformName = unique(PlatformName),
-              TransLenKm = sum(WatchLenKm),
+              Effort = sum(WatchLenKm),
               PlatformDir = paste(unique(PlatformDir), collapse = ", "),
               #Watches = paste(unique(WatchID), collapse = ", "),
               Watches = list(unique(WatchID)),
@@ -111,7 +111,7 @@ ECSAS.create.transects <- function(dat, angle.thresh = NULL, max.lag = 10, debug
     ) %>% 
     as.data.frame()
   
-  rownames(data) <- data$tr.id
+  rownames(data) <- data$Sample.Label
   l <- sp::SpatialLinesDataFrame(lines, data)
   sp::proj4string(l) <- sp::CRS(latlongproj)
   l
