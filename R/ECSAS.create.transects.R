@@ -5,6 +5,7 @@
 #'@param dat  a dataframe of ECSAS watches (1 row per watch). 
 #'@param angle.thresh - (default 90 degrees) changes in direction of more than this are considered to start new transects (currently not implemented)
 #'@param max.lag (default 10 minutes) the maximum time lag allowed between consecutive watches to be considered part of the same transect. 
+#'@param debug.watch watchid to stop at in for loop if debug is true
 #'
 #'@details
 #'Combine watches into transects and create a spatiallinesdataframe for each transect in dat. Transects are defined as all 
@@ -21,7 +22,7 @@
 #'@seealso \code{\link{ECSAS.extract}}
 #'
 
-ECSAS.create.transects <- function(dat, angle.thresh = NULL, max.lag = 10, debug = FALSE){
+ECSAS.create.transects <- function(dat, angle.thresh = NULL, max.lag = 10, debug = FALSE, debug.watch = NULL){
   
   if(debug) browser()
   
@@ -49,8 +50,10 @@ ECSAS.create.transects <- function(dat, angle.thresh = NULL, max.lag = 10, debug
   # start assigning Sample.Label until one of day, observer, direction or vessel changes
   for (i in 1:nrow(dat)){
 #    if(Sample.Label == 140) browser()
-    
+  
     row <- dat[i,]
+    
+    if(debug && !is.null(debug.watch) && row$WatchID == debug.watch) browser()
 
     # start new transect?
     # if(cur.obs != row$Observer ||abs((as.numeric(as.character(row$Direction)) - 
@@ -95,7 +98,9 @@ ECSAS.create.transects <- function(dat, angle.thresh = NULL, max.lag = 10, debug
   # create data row for each transect and create spatialLinesDataFrame
   data <- dat@data %>% 
     dplyr::group_by(Sample.Label) %>% 
-    dplyr::summarize(Date = unique(Date),
+    dplyr::summarize(
+              CruiseID = unique(CruiseID),
+              Date = unique(Date),
               StartTime = min(as.POSIXct(StartTime, format="%H:%M:%S")),
               EndTime = max(as.POSIXct(EndTime, format="%H:%M:%S")),
               ObserverName = unique(ObserverName),

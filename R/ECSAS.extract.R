@@ -252,6 +252,7 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
   #Import all the tables needed
   Sighting <- RODBC::sqlQuery(channel1, query.sighting) %>% ensure_data_is_returned 
   watches <- RODBC::sqlQuery(channel1, query.watches) %>% ensure_data_is_returned 
+  cruise.notes <- RODBC::sqlFetch(channel1, "tblCruiseNotes") %>% ensure_data_is_returned 
   distance <- RODBC::sqlFetch(channel1, "lkpDistanceCenters") %>% ensure_data_is_returned 
   observer <- RODBC::sqlFetch(channel1, "lkpObserver") %>% ensure_data_is_returned 
   platform.name <- RODBC::sqlFetch(channel1, "lkpPlatform") %>% ensure_data_is_returned 
@@ -262,6 +263,7 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
 
   #name change for the second column
   names(platform.name)[2] <- "PlatformName"
+  cruise.notes %<>% dplyr::rename(CruiseNote = Note)
 
   # Calculate watch length in km via dead reconing if start and end positions are not avail, otherwise use ellipsoid method.
   # Note use of more accurate CalcDurMin rather than the (integer) ObsLen
@@ -285,20 +287,23 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
   Watches2 <- plyr::join(
                 plyr::join(
                   plyr::join(
-                    plyr::join(watches, seastates, by="SeaStateID", type = "left"), 
-                    observer, by = "ObserverID"
+                    plyr::join(
+                      plyr::join(watches, seastates, by="SeaStateID", type = "left"), 
+                      observer, by = "ObserverID"
+                    ),
+                    platform.name, by = "PlatformID", type="left"
                   ),
-                  platform.name, by = "PlatformID", type="left"
+                  platform.activity, by = "PlatformTypeID",type="left"
                 ),
-                platform.activity, by = "PlatformTypeID",type="left"
-                ) [,c("CruiseID","Program", "PlatformName",
-                  "Atlantic", "Quebec", "Arctic", "ESRF", "AZMP", "FSRS", "StartDate", "EndDate", "WatchID", "TransectNo",
-                  "ObserverName", "PlatformClass", "WhatCount", "TransNearEdge", "TransFarEdge","DistMeth",
-                  "Date","Year","Month","Week","Day","StartTime", "EndTime", "CalcDurMin",
-                  "LatStart","LongStart", "LatEnd", "LongEnd", "PlatformSpeed",
-                  "PlatformDir", "PlatformDirDeg", "PlatformActivity", "ObsLen", "WatchLenKm", "Snapshot","Experience",
-                  "Visibility", "SeaState", "Swell", "Windspeed", "Windforce", "Weather", "Glare", "IceType",
-                  "IceConc", "ObsSide", "ObsOutIn", "ObsHeight", "ScanType", "ScanDir")]
+                cruise.notes, by = "CruiseID", type = "left"
+                )[,c("CruiseID", "CruiseNote", "Program", "PlatformName",
+                    "Atlantic", "Quebec", "Arctic", "ESRF", "AZMP", "FSRS", "StartDate", "EndDate", "WatchID", "TransectNo",
+                    "ObserverName", "PlatformClass", "WhatCount", "TransNearEdge", "TransFarEdge","DistMeth",
+                    "Date","Year","Month","Week","Day","StartTime", "EndTime", "CalcDurMin",
+                    "LatStart","LongStart", "LatEnd", "LongEnd", "PlatformSpeed",
+                    "PlatformDir", "PlatformDirDeg", "PlatformActivity", "ObsLen", "WatchLenKm", "Snapshot","Experience",
+                    "Visibility", "SeaState", "Swell", "Windspeed", "Windforce", "Weather", "Glare", "IceType",
+                    "IceConc", "ObsSide", "ObsOutIn", "ObsHeight", "ScanType", "ScanDir")]
 
   ###Create the final table by joining the observations to the watches
   final.df <- plyr::join(Watches2, Sighting2, by = "WatchID", type = "left", match = "all")
