@@ -5,6 +5,7 @@
 #'@param dat  a dataframe of ECSAS watches (1 row per watch). 
 #'@param angle.thresh - (default 90 degrees) changes in direction of more than this are considered to start new transects (currently not implemented)
 #'@param max.lag (default 10 minutes) the maximum time lag allowed between consecutive watches to be considered part of the same transect. 
+#'@param CRS - if not null, the output coordinate system will be set CRS via \code{sp::spTransform}
 #'@param debug.watch watchid to stop at in for loop if debug is true
 #'
 #'@details
@@ -22,7 +23,7 @@
 #'@seealso \code{\link{ECSAS.extract}}
 #'
 
-ECSAS.create.transects <- function(dat, angle.thresh = NULL, max.lag = 10, debug = FALSE, debug.watch = NULL){
+ECSAS.create.transects <- function(dat, angle.thresh = NULL, max.lag = 10, debug = FALSE, CRS = NULL, debug.watch = NULL){
   
   if(debug) browser()
   
@@ -119,6 +120,8 @@ ECSAS.create.transects <- function(dat, angle.thresh = NULL, max.lag = 10, debug
   rownames(data) <- data$Sample.Label
   l <- sp::SpatialLinesDataFrame(lines, data)
   sp::proj4string(l) <- sp::CRS(latlongproj)
+  if (!is.null(CRS))
+    l <- sp::spTransform(l, CRS)
   l
 }
 
