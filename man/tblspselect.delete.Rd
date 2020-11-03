@@ -4,8 +4,10 @@
 \alias{tblspselect.delete}
 \title{MAke sute that the table tblspselect doesnt exist in the ECSAS database}
 \usage{
-tblspselect.delete(ecsas.drive = "C:/Users/Christian/Google Drive/ECSAS/",
-  ecsas.file = "Master ECSAS v 3.33.mdb")
+tblspselect.delete(
+  ecsas.drive = "C:/Users/Christian/Google Drive/ECSAS/",
+  ecsas.file = "Master ECSAS v 3.33.mdb"
+)
 }
 \arguments{
 \item{ecsas.drive}{Where is located the ECSAS Access database}

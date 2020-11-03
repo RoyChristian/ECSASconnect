@@ -7,18 +7,27 @@
 #'@param lat Pair of coordinate giving the southern and northern limits of the range desired.
 #'@param long Pair of coordinate giving the western and eastern limits of the range desired. Note that west longitude values must be negative.
 #'@param obs.keep Name of the observer to keep for the extraction. The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").
-#'@param obs.exclude Name of the observer to exlude for the extraction.The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").
+#'@param obs.exclude Name of the observer to exclude for the extraction.The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").
 #'@param sub.program From which sub.program the extraction must be made. Options are Quebec, Atlantic, Arctic, ESRF, AZMP, FSES, or All
-#'All subprograms will inlcude the observations made in the PIROP program.
+#'All subprograms will include the observations made in the PIROP program.
 #'@param intransect Should we keep only the birds counted on the transect (if TRUE, the default) or extract all observations (if FALSE).
 #'@param distMeth Integer specifying the distance sampling method code (tblWatch.DistMeth in ECSAS). Default is c(14, 20) which includes all watches
-#'   with perpendicular distanes for both flying and swimming birds. If "All", then observations from all distance sampling methods will be returned.
-#'@param ecsas.path (default NULL) full pathname to the ECSAS database. If NULL, the path is built from \code{ecsas.drive} and \code{ecsas.file}.
+#'   with perpendicular distances for both flying and swimming birds. If "All", then observations from all distance sampling methods will be returned.
+#'@param ecsas.path (default NULL) full path name to the ECSAS database. If NULL, the path is built from \code{ecsas.drive} and \code{ecsas.file}.
 #'@param ecsas.drive path to folder containing the ECSAS Access database
 #'@param ecsas.file  name of the ECSAS Access database
-#'@details
-#'The function will produce a data frame that contains all the pertinent information. Note that watches with no observations (the so called "zeros" are 
+#'@details 
+#'The function will produce a data frame that contains all the pertinent information. Note that watches with no observations (the so called "zeros" are
 #'included by default).
+#'
+#'The distance traveled during the watch is returned in the column \code{WatchLenKm}. If lat/long coordinates
+#'are available for both the start and end locations of the watch, then it is calculated as the shortest 
+#'distance between these two points on the WGS84 ellipsoid using \code{geosphere::DistGeo} and, in this case,
+#'\code{WatchLenKmHow} will contain \code{"distGeo"}. Otherwise \code{WatchLenKm} 
+#'is calculated as the \code{PlatformSpeed * CalcDurMin} where \code{CalcDurMin} is the length of the 
+#'watch in minutes computed from start and end times. In this case, \code{WatchLenKmHow} will contain 
+#'\code{"Dead Reckoning"}. 
+#' 
 #'@section Author:Christian Roy, Dave Fifield
 #'
 #'@seealso \code{\link{QC.extract}}
@@ -26,7 +35,8 @@
 ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), obs.keep=NA, obs.exclude=NA,
            sub.program=c("All","Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS"), intransect=TRUE, distMeth = c(14, 20),
            ecsas.path = NULL,
-           ecsas.drive="C:/Users/christian/Dropbox/ECSAS", ecsas.file="Master ECSAS_backend v 3.31.mdb", debug = FALSE){
+           ecsas.drive="C:/Users/christian/Dropbox/ECSAS", ecsas.file="Master ECSAS_backend v 3.31.mdb", 
+           debug = FALSE) {
 
 # debugging
 # rm(list=ls())
@@ -265,13 +275,18 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
   names(platform.name)[2] <- "PlatformName"
   cruise.notes %<>% dplyr::rename(CruiseNote = Note)
 
-  # Calculate watch length in km via dead reconing if start and end positions are not avail, otherwise use ellipsoid method.
+  # Calculate watch length in km via dead reckoning if start and end positions are not avail, otherwise use ellipsoid method.
   # Note use of more accurate CalcDurMin rather than the (integer) ObsLen
   watches  %<>% 
-    dplyr::mutate(CalcDurMin = (as.numeric(EndTime - StartTime))/60,
-                  WatchLenKm = dplyr::case_when(is.na(LatStart) | is.na(LongStart) | is.na(LatEnd) | is.na(LongEnd) ~ 
-                                    (PlatformSpeed * CalcDurMin / 60 * 1.852),
-                                  TRUE ~ geosphere::distGeo(cbind(LongStart, LatStart), cbind(LongEnd,  LatEnd))/1000)) %>% 
+    dplyr::mutate(CalcDurMin = as.numeric(difftime(EndTime, StartTime, units = "mins")),
+      WatchLenKm = dplyr::case_when(
+        is.na(LatStart) | is.na(LongStart) | is.na(LatEnd) | is.na(LongEnd) ~ 
+                                                (PlatformSpeed * (CalcDurMin / 60) * 1.852),
+        TRUE ~ geosphere::distGeo(cbind(LongStart, LatStart), cbind(LongEnd,  LatEnd))/1000),
+      WatchLenKmHow = dplyr::case_when(
+        is.na(LatStart) | is.na(LongStart) | is.na(LatEnd) | is.na(LongEnd) ~ "Dead Reckoning",
+                                                                       TRUE ~ "distGeo")
+      ) %>% 
     dplyr::rename(SeaStateID = SeaState)
 
   #merge and filter the tables for the sigthings
@@ -297,11 +312,13 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
                 ),
                 cruise.notes, by = "CruiseID", type = "left"
                 )[,c("CruiseID", "CruiseNote", "Program", "PlatformName",
-                    "Atlantic", "Quebec", "Arctic", "ESRF", "AZMP", "FSRS", "StartDate", "EndDate", "WatchID", "TransectNo",
+                    "Atlantic", "Quebec", "Arctic", "ESRF", "AZMP", "FSRS", "StartDate", "EndDate", "WatchID",
+                    "TransectNo",
                     "ObserverName", "PlatformClass", "WhatCount", "TransNearEdge", "TransFarEdge","DistMeth",
                     "Date","Year","Month","Week","Day","StartTime", "EndTime", "CalcDurMin",
                     "LatStart","LongStart", "LatEnd", "LongEnd", "PlatformSpeed",
-                    "PlatformDir", "PlatformDirDeg", "PlatformActivity", "ObsLen", "WatchLenKm", "Snapshot","Experience",
+                    "PlatformDir", "PlatformDirDeg", "PlatformActivity", "ObsLen", "WatchLenKm", "WatchLenKmHow",
+                    "Snapshot","Experience",
                     "Visibility", "SeaState", "Swell", "Windspeed", "Windforce", "Weather", "Glare", "IceType",
                     "IceConc", "ObsSide", "ObsOutIn", "ObsHeight", "ScanType", "ScanDir")]
 

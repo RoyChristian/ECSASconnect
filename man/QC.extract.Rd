@@ -4,10 +4,17 @@
 \alias{QC.extract}
 \title{Extract the information for the Quebec ECSAS database}
 \usage{
-QC.extract(sp = "ATPU", years = c(2006, 2013), lat = c(30, 70),
-  long = c(-70, -30), Obs.keep = NA, Obs.exclude = NA, intransect = T,
+QC.extract(
+  sp = "ATPU",
+  years = c(2006, 2013),
+  lat = c(30, 70),
+  long = c(-70, -30),
+  Obs.keep = NA,
+  Obs.exclude = NA,
+  intransect = T,
   ecsas.drive = "C:/Users/christian/Dropbox/ECSAS",
-  ecsas.file = "Oiseaux marins 2006-2014.accdb")
+  ecsas.file = "Oiseaux marins 2006-2014.accdb"
+)
 }
 \arguments{
 \item{sp}{Alpha code for the specie desired in the extraction. If more than one species all the desired species must be saved into a vector ex: c("COMU,"TBMU", "UNMU")}

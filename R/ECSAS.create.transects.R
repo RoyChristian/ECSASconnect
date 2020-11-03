@@ -16,7 +16,7 @@
 #'\code{PlatformName}, \code{Date}, \code{StartTime}, \code{EndTime}, \code{LatStart}, \code{LongStart}, \code{LatEnd}, 
 #'\code{LongEnd} as returned by \code{ECSAS.extract}.  \code{LatEnd} and \code{LongEnd} are only necessary for the last watch in
 #'in each transect to provide it's endpoint. If either is \code{NA}, the end point will be projected along a loxodrome based 
-#'on the watch start location, \Code{PlatformDir} (or \code{PlatformDirDeg} if it exists), \code{PlatformSpeed}, and \code{ObsLen}. 
+#'on the watch start location, \code{PlatformDir} (or \code{PlatformDirDeg} if it exists), \code{PlatformSpeed}, and \code{ObsLen}. 
 #'If either of these is missing then an error is produced. 
 #'@section Author:Dave Fifield
 #'

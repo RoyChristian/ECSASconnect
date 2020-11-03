@@ -6,8 +6,6 @@
 #'@param thresh (as percentage; default 50) maximum that the two calculations can be different before being flagged as problematic. Note that, as of at least ECSAS 3.61,
 #'watch duration is only recorded to the nearest minute
 #'
-#'@details
-
 #'@section Author:Dave Fifield
 #'
 #'@seealso \code{\link{ECSAS.extract}}
