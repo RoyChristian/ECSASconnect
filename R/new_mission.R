@@ -1,7 +1,7 @@
 ### A function that creates ? template for a new mission with three sheets transects obervationss and missions based on the nom_colonnes_SOMEC-QC.xlsx
 
 
-
+#' @export
 new_mission<-function(
   
   input=NULL,

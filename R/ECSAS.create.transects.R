@@ -2,10 +2,10 @@
 #'@title Create transect lines from ECSAS watches
 #'
 #'@description This function aggregates consecutive ECSAS watches into transects. 
-#'@param dat  a dataframe of ECSAS watches (1 row per watch). 
-#'@param angle.thresh - (default 90 degrees) changes in direction of more than this are considered to start new transects (currently not implemented)
+#'@param dat a dataframe of ECSAS watches (1 row per watch). 
+#'@param angle.thresh (default 90 degrees) changes in direction of more than this are considered to start new transects (currently not implemented)
 #'@param max.lag (default 10 minutes) the maximum time lag allowed between consecutive watches to be considered part of the same transect. 
-#'@param CRS - if not null, the output coordinate system will be set CRS via \code{sp::spTransform}
+#'@param CRS if not null, the output coordinate system will be set CRS via \code{sp::spTransform}
 #'@param debug.watch watchid to stop at in for loop if debug is true
 #'
 #'@details

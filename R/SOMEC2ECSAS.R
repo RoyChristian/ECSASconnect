@@ -2,9 +2,7 @@
 # 2 - nom Alpha en francais
 # 3 - Dates manquantes	
 # test SCF
-
-
-
+#'@export
 SOMEC2ECSAS <- function(
 	
 	input = "SOMEC.accdb", # path to the access database

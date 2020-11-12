@@ -1,4 +1,3 @@
-#'@export
 #'@title Convert a series of continuous aerial observations
 #'
 #'@description This function takes a data frame of continuous observations and

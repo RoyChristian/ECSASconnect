@@ -11,7 +11,7 @@ ECSAS.find.suspicious.coords(debug = FALSE)
 watch duration is only recorded to the nearest minute}
 }
 \description{
-This function looks for watches whose length in km as calculated by dead-reckoning (speed * time) is more than \code{thresh} percent different 
+This function looks for watches whose length in km as calculated by dead-reckoning (speed * time) is more than \code{thresh} percent different
 than that calculated by using start and end positions.
 }
 \section{Author}{

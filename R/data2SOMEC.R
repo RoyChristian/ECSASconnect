@@ -1,4 +1,4 @@
-
+#' @export
 
 data2SOMEC<-function(
 	

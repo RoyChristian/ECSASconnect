@@ -17,6 +17,7 @@ ECSAS.extract(
   ecsas.path = NULL,
   ecsas.drive = "C:/Users/christian/Dropbox/ECSAS",
   ecsas.file = "Master ECSAS_backend v 3.31.mdb",
+  ind.tables.only = FALSE,
   debug = FALSE
 )
 }
@@ -25,41 +26,67 @@ ECSAS.extract(
 
 \item{years}{Optional. Either a single year or a vector of two years denoting "from" and "to" (inclusive).}
 
-\item{lat}{Pair of coordinate giving the southern and northern limits of the range desired.}
+\item{lat}{Vector of two numbers giving the southern and northern limits of the range desired.}
 
-\item{long}{Pair of coordinate giving the western and eastern limits of the range desired. Note that west longitude values must be negative.}
+\item{long}{Vector of two numbers giving the western and eastern limits of the range desired. Note that west longitude values must be negative.}
 
-\item{obs.keep}{Name of the observer to keep for the extraction. The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").}
+\item{obs.keep}{Names of the observers to keep for the extraction. Name format: Surname_FirstName (eg: "Bolduc_Francois").}
 
-\item{obs.exclude}{Name of the observer to exlude for the extraction.The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").}
+\item{obs.exclude}{Name of the observer to exclude for the extraction. Name format: Surname_FirstName (eg: "Bolduc_Francois").}
 
 \item{sub.program}{From which sub.program the extraction must be made. Options are Quebec, Atlantic, Arctic, ESRF, AZMP, FSES, or All
-All subprograms will inlcude the observations made in the PIROP program.}
+All subprograms will include the observations made in the PIROP program.}
 
-\item{intransect}{Should we keep only the birds counted on the transect (if TRUE, the default) or extract all observations (if FALSE).}
+\item{intransect}{If TRUE (the default), return only observations coded as "In Transect", otherwise return all
+observations. See the ECSAS survey protocol for more details:
 
-\item{distMeth}{Integer specifying the distance sampling method code (tblWatch.DistMeth in ECSAS). Default is c(14, 20) which includes all watches
-with perpendicular distanes for both flying and swimming birds. If "All", then observations from all distance sampling methods will be returned.}
+Gjerdrum, C., D.A. Fifield, and S.I. Wilhelm.
+2012. Eastern Canada Seabirds at Sea (ECSAS) standardized protocol for pelagic seabird surveys from
+moving and stationary platforms. Canadian Wildlife Service Technical Report Series No. 515.
+Atlantic Region. vi + 37 pp.}
 
-\item{ecsas.path}{(default NULL) full pathname to the ECSAS database. If NULL, the path is built from \code{ecsas.drive} and \code{ecsas.file}.}
+\item{distMeth}{Integer specifying the distance sampling method code (see tblWatch.DistMeth in ECSAS). Default
+is c(14, 20) which includes all watches with perpendicular distances for both flying and swimming birds.
+If "All", then observations from all distance sampling methods will be returned.}
+
+\item{ecsas.path}{(default NULL) full path name to the ECSAS database. If NULL, the path is built from
+\code{ecsas.drive} and \code{ecsas.file}.}
 
 \item{ecsas.drive}{path to folder containing the ECSAS Access database}
 
-\item{ecsas.file}{name of the ECSAS Access database}
+\item{ecsas.file}{name of the ECSAS Access database file}
+
+\item{ind.tables.only}{Indicates if two individual tables for watch/cruise, and observations
+should be returned (default FALSE) rather than a single table with all columns combined.
+See Value section.}
+}
+\value{
+By default the function will produce a data frame that contains all the pertinent information.
+Note that watches with no observations (the so called "zeros" are included by default).
+
+If \code{ind.tables.only} is \code{FALSE} (the default), then a single dataframe is returned
+containing all pertinent cruise, watch and sightings table info for each observation. If a given watch had
+no observations, then sighting related fields will be \code{NA}.
+
+If \code{ind.tables.only} is \code{TRUE}, then a list is returned with the following elements:
+
+\tabular{ll}{
+\code{watches} \tab the combined columns from the watch and cruise tables only.\cr
+\code{sightings}\tab the columns from the sightings table only.
+}
+
+Note it is not currently possible to extract the watch and cruise tables separately.
 }
 \description{
-The function will connect to the Access database, create a series of queries and import the desired information in a data frame.
+This function will connect to the Access database, create a series of queries and import the desired information in a data frame.
 }
 \details{
-The function will produce a data frame that contains all the pertinent information. Note that watches with no observations (the so called "zeros" are
-included by default).
-
 The distance traveled during the watch is returned in the column \code{WatchLenKm}. If lat/long coordinates
-are available for both the start and end locations of the watch, then it is calculated as the shortest 
-distance between these two points on the WGS84 ellipsoid using \code{geosphere::DistGeo} and, in this case,
-\code{WatchLenKmHow} will contain \code{"distGeo"}. Otherwise \code{WatchLenKm} 
-is calculated as the \code{PlatformSpeed * CalcDurMin} where \code{CalcDurMin} is the length of the 
-watch in minutes computed from start and end times. In this case, \code{WatchLenKmHow} will contain 
+are available for both the start and end locations of the watch, then it is calculated as the shortest
+distance between these two points on the WGS84 ellipsoid using \code{\link[geosphere:distGeo]{geosphere::distGeo()}} and, in this case,
+\code{WatchLenKmHow} will contain \code{"distGeo"}. Otherwise \code{WatchLenKm}
+is calculated as the \code{PlatformSpeed * CalcDurMin} where \code{CalcDurMin} is the length of the
+watch in minutes computed from start and end times. In this case, \code{WatchLenKmHow} will contain
 \code{"Dead Reckoning"}.
 }
 \section{Author}{

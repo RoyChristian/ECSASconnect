@@ -1,4 +1,4 @@
-
+#'@export
 buildSOMEC<-function(
   
   input="OiseauxMarins2006-2014.accdb",

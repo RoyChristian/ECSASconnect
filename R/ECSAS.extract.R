@@ -1,42 +1,78 @@
 #' @export
 #'@title Extract data from ECSAS database
 #'
-#'@description The function will connect to the Access database, create a series of queries and import the desired information in a data frame.
+#'@description This function will connect to the Access database, create a series of queries and import the desired information in a data frame.
+#'
 #'@param species Optional. Alpha code (or vector of Alpha codes, e.g., c("COMU,"TBMU", "UNMU")) for the species desired in the extraction.
 #'@param years Optional. Either a single year or a vector of two years denoting "from" and "to" (inclusive).
-#'@param lat Pair of coordinate giving the southern and northern limits of the range desired.
-#'@param long Pair of coordinate giving the western and eastern limits of the range desired. Note that west longitude values must be negative.
-#'@param obs.keep Name of the observer to keep for the extraction. The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").
-#'@param obs.exclude Name of the observer to exclude for the extraction.The name of the observer must be followed by it's first name (eg: "Bolduc_Francois").
+#'@param lat Vector of two numbers giving the southern and northern limits of the range desired.
+#'@param long Vector of two numbers giving the western and eastern limits of the range desired. Note that west longitude values must be negative.
+#'@param obs.keep Names of the observers to keep for the extraction. Name format: Surname_FirstName (eg: "Bolduc_Francois").
+#'@param obs.exclude Name of the observer to exclude for the extraction. Name format: Surname_FirstName (eg: "Bolduc_Francois").
 #'@param sub.program From which sub.program the extraction must be made. Options are Quebec, Atlantic, Arctic, ESRF, AZMP, FSES, or All
 #'All subprograms will include the observations made in the PIROP program.
-#'@param intransect Should we keep only the birds counted on the transect (if TRUE, the default) or extract all observations (if FALSE).
-#'@param distMeth Integer specifying the distance sampling method code (tblWatch.DistMeth in ECSAS). Default is c(14, 20) which includes all watches
-#'   with perpendicular distances for both flying and swimming birds. If "All", then observations from all distance sampling methods will be returned.
-#'@param ecsas.path (default NULL) full path name to the ECSAS database. If NULL, the path is built from \code{ecsas.drive} and \code{ecsas.file}.
+#'@param intransect If TRUE (the default), return only observations coded as "In Transect", otherwise return all
+#'   observations. See the ECSAS survey protocol for more details: 
+#'   
+#'   Gjerdrum, C., D.A. Fifield, and S.I. Wilhelm.
+#'   2012. Eastern Canada Seabirds at Sea (ECSAS) standardized protocol for pelagic seabird surveys from 
+#'   moving and stationary platforms. Canadian Wildlife Service Technical Report Series No. 515. 
+#'   Atlantic Region. vi + 37 pp.
+#'@param distMeth Integer specifying the distance sampling method code (see tblWatch.DistMeth in ECSAS). Default 
+#'   is c(14, 20) which includes all watches with perpendicular distances for both flying and swimming birds. 
+#'   If "All", then observations from all distance sampling methods will be returned.
+#'@param ecsas.path (default NULL) full path name to the ECSAS database. If NULL, the path is built from 
+#'   \code{ecsas.drive} and \code{ecsas.file}.
 #'@param ecsas.drive path to folder containing the ECSAS Access database
-#'@param ecsas.file  name of the ECSAS Access database
+#'@param ecsas.file  name of the ECSAS Access database file
+#'@param ind.tables.only Indicates if two individual tables for watch/cruise, and observations 
+#'   should be returned (default FALSE) rather than a single table with all columns combined.
+#'   See Value section.
+#'   
 #'@details 
-#'The function will produce a data frame that contains all the pertinent information. Note that watches with no observations (the so called "zeros" are
-#'included by default).
 #'
 #'The distance traveled during the watch is returned in the column \code{WatchLenKm}. If lat/long coordinates
 #'are available for both the start and end locations of the watch, then it is calculated as the shortest 
-#'distance between these two points on the WGS84 ellipsoid using \code{geosphere::DistGeo} and, in this case,
+#'distance between these two points on the WGS84 ellipsoid using [geosphere::distGeo()] and, in this case,
 #'\code{WatchLenKmHow} will contain \code{"distGeo"}. Otherwise \code{WatchLenKm} 
 #'is calculated as the \code{PlatformSpeed * CalcDurMin} where \code{CalcDurMin} is the length of the 
 #'watch in minutes computed from start and end times. In this case, \code{WatchLenKmHow} will contain 
 #'\code{"Dead Reckoning"}. 
 #' 
+#'@return By default the function will produce a data frame that contains all the pertinent information. 
+#' Note that watches with no observations (the so called "zeros" are included by default).
+#' 
+#' If \code{ind.tables.only} is \code{FALSE} (the default), then a single dataframe is returned
+#' containing all pertinent cruise, watch and sightings table info for each observation. If a given watch had
+#' no observations, then sighting related fields will be \code{NA}.
+#' 
+#' If \code{ind.tables.only} is \code{TRUE}, then a list is returned with the following elements:
+#' 
+#' \tabular{ll}{
+#'   \code{watches} \tab the combined columns from the watch and cruise tables only.\cr
+#'   \code{sightings}\tab the columns from the sightings table only.
+#' }
+#' 
+#' Note it is not currently possible to extract the watch and cruise tables separately.
+#' 
 #'@section Author:Christian Roy, Dave Fifield
 #'
 #'@seealso \code{\link{QC.extract}}
 
-ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), obs.keep=NA, obs.exclude=NA,
-           sub.program=c("All","Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS"), intransect=TRUE, distMeth = c(14, 20),
-           ecsas.path = NULL,
-           ecsas.drive="C:/Users/christian/Dropbox/ECSAS", ecsas.file="Master ECSAS_backend v 3.31.mdb", 
-           debug = FALSE) {
+ECSAS.extract <-  function(species, 
+                           years, 
+                           lat=c(-90,90), 
+                           long=c(-180, 180), 
+                           obs.keep=NA, 
+                           obs.exclude=NA,
+                           sub.program=c("All","Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS"), 
+                           intransect=TRUE, 
+                           distMeth = c(14, 20),
+                           ecsas.path = NULL,
+                           ecsas.drive="C:/Users/christian/Dropbox/ECSAS", 
+                           ecsas.file="Master ECSAS_backend v 3.31.mdb", 
+                           ind.tables.only = FALSE,
+                           debug = FALSE) {
 
 # debugging
 # rm(list=ls())
@@ -130,16 +166,19 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
     sep = " "
   )
 
-  #Excute query for species
-  specieInfo <-  RODBC::sqlQuery(channel1, query.species) %>% ensure_data_is_returned 
-  
+  # Execute query for species.Remove speciesinfo records where Alpha is NA, since
+  # they can't currently be specified for selection anyway. 
+  speciesInfo <-  RODBC::sqlQuery(channel1, query.species) %>% 
+    ensure_data_is_returned %>% 
+    dplyr::filter(!is.na(Alpha))
+    
   # handle species specification
   if (!missing(species)) {
     ### Make sure that species is in capital letters
     species <- toupper(species)
 
     ### make sure the species are in the database.
-    wrong.sp <- species[!species %in% specieInfo$Alpha]
+    wrong.sp <- species[!(species %in% speciesInfo$Alpha)]
     if (length(wrong.sp) > 0){
         if(length(wrong.sp) == 1){
           stop(paste("species code", wrong.sp, "is not included in the database", sep = " "))
@@ -148,13 +187,9 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
       }
     }
 
-    # Remove speciesinfo records where Alpha is NA, since they can't currently be specified for selection anyway. This helps
-    # for the indexing below.
-    specieInfo <- dplyr::filter(specieInfo, !is.na(Alpha))
-    
     # Form the WHERE clause that is based on the species number instead of the alpha code
     nspecies <- paste0(sapply(1:length(species), function(i) {
-      paste("(tblSighting.SpecInfoID)=", specieInfo[specieInfo$Alpha == species[i], ]$SpecInfoID, sep = "")
+      paste("(tblSighting.SpecInfoID)=", speciesInfo[speciesInfo$Alpha == species[i], ]$SpecInfoID, sep = "")
       }), collapse = " Or ")
     sp.selection <- paste("AND (", nspecies, ")", sep = "")
   } 
@@ -258,25 +293,25 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
                                 sep=" "),
                           sep=" ")
 
-
-  #Import all the tables needed
-  Sighting <- RODBC::sqlQuery(channel1, query.sighting) %>% ensure_data_is_returned 
+  # Import all the tables needed
+  sightings <- RODBC::sqlQuery(channel1, query.sighting) %>% ensure_data_is_returned 
   watches <- RODBC::sqlQuery(channel1, query.watches) %>% ensure_data_is_returned 
-  cruise.notes <- RODBC::sqlFetch(channel1, "tblCruiseNotes") %>% ensure_data_is_returned 
+  cruise.notes <- RODBC::sqlFetch(channel1, "tblCruiseNotes") %>% 
+    ensure_data_is_returned %>% 
+    dplyr::rename(CruiseNote = Note)
   distance <- RODBC::sqlFetch(channel1, "lkpDistanceCenters") %>% ensure_data_is_returned 
   observer <- RODBC::sqlFetch(channel1, "lkpObserver") %>% ensure_data_is_returned 
-  platform.name <- RODBC::sqlFetch(channel1, "lkpPlatform") %>% ensure_data_is_returned 
+  platform.name <- RODBC::sqlFetch(channel1, "lkpPlatform") %>% 
+    ensure_data_is_returned %>% 
+    dplyr::rename(PlatformName = PlatformText)
   platform.activity <- RODBC::sqlFetch(channel1, "lkpPlatformType") %>% ensure_data_is_returned 
   seastates <- RODBC::sqlFetch(channel1, "lkpSeastate") %>% ensure_data_is_returned 
   #close connection
   RODBC::odbcCloseAll()
 
-  #name change for the second column
-  names(platform.name)[2] <- "PlatformName"
-  cruise.notes %<>% dplyr::rename(CruiseNote = Note)
-
-  # Calculate watch length in km via dead reckoning if start and end positions are not avail, otherwise use ellipsoid method.
-  # Note use of more accurate CalcDurMin rather than the (integer) ObsLen
+  # Calculate watch length in km via dead reckoning if start and end positions
+  # are not avail, otherwise use ellipsoid method. Note use of more accurate
+  # CalcDurMin rather than the (integer) ObsLen.
   watches  %<>% 
     dplyr::mutate(CalcDurMin = as.numeric(difftime(EndTime, StartTime, units = "mins")),
       WatchLenKm = dplyr::case_when(
@@ -287,62 +322,43 @@ ECSAS.extract <-  function(species,  years, lat=c(-90,90), long=c(-180, 180), ob
         is.na(LatStart) | is.na(LongStart) | is.na(LatEnd) | is.na(LongEnd) ~ "Dead Reckoning",
                                                                        TRUE ~ "distGeo")
       ) %>% 
-    dplyr::rename(SeaStateID = SeaState)
+    dplyr::rename(SeaStateID = SeaState) %>% 
+    dplyr::left_join(seastates, by="SeaStateID") %>% 
+    dplyr::left_join(observer, by = "ObserverID") %>% 
+    dplyr::left_join(platform.name, by = "PlatformID") %>% 
+    dplyr::left_join(platform.activity, by = "PlatformTypeID") %>% 
+    dplyr::left_join(cruise.notes, by = "CruiseID") %>% 
+    mutate(ObserverName = as.factor(gsub(", " , "_", as.character(ObserverName)))) %>% 
+    dplyr::select(CruiseID, CruiseNote, Program, PlatformName, Atlantic, Quebec, Arctic, ESRF, 
+                  AZMP, FSRS, StartDate, EndDate, WatchID, TransectNo, ObserverName, PlatformClass, 
+                  WhatCount, TransNearEdge, TransFarEdge, DistMeth, Date, Year, Month, Week, Day,
+                  StartTime, EndTime, CalcDurMin, LatStart, LongStart, LatEnd, LongEnd, PlatformSpeed,
+                  PlatformDir, PlatformDirDeg, PlatformActivity, ObsLen, WatchLenKm, WatchLenKmHow,
+                  Snapshot, Experience, Visibility, SeaState, Swell, Windspeed, Windforce, Weather, 
+                  Glare, IceType, IceConc, ObsSide, ObsOutIn, ObsHeight, ScanType, ScanDir)
 
-  #merge and filter the tables for the sigthings
-  Sighting2 <- plyr::join(plyr::join(Sighting, specieInfo, by = "SpecInfoID", type = "left"),
-                    distance, by = "DistanceCode") [,c("FlockID", "WatchID","Alpha","English","Latin","Class",
-                                                    "Seabird", "Waterbird","ObsLat","ObsLong","ObsTime","Distance","DistanceCode",
-                                                    "InTransect","Association", "Behaviour","FlightDir","FlySwim",
-                                                    "Count","Age","Plumage","Sex")]
-
-
-
-  #merge and filter the tables for the watches
-  Watches2 <- plyr::join(
-                plyr::join(
-                  plyr::join(
-                    plyr::join(
-                      plyr::join(watches, seastates, by="SeaStateID", type = "left"), 
-                      observer, by = "ObserverID"
-                    ),
-                    platform.name, by = "PlatformID", type="left"
-                  ),
-                  platform.activity, by = "PlatformTypeID",type="left"
-                ),
-                cruise.notes, by = "CruiseID", type = "left"
-                )[,c("CruiseID", "CruiseNote", "Program", "PlatformName",
-                    "Atlantic", "Quebec", "Arctic", "ESRF", "AZMP", "FSRS", "StartDate", "EndDate", "WatchID",
-                    "TransectNo",
-                    "ObserverName", "PlatformClass", "WhatCount", "TransNearEdge", "TransFarEdge","DistMeth",
-                    "Date","Year","Month","Week","Day","StartTime", "EndTime", "CalcDurMin",
-                    "LatStart","LongStart", "LatEnd", "LongEnd", "PlatformSpeed",
-                    "PlatformDir", "PlatformDirDeg", "PlatformActivity", "ObsLen", "WatchLenKm", "WatchLenKmHow",
-                    "Snapshot","Experience",
-                    "Visibility", "SeaState", "Swell", "Windspeed", "Windforce", "Weather", "Glare", "IceType",
-                    "IceConc", "ObsSide", "ObsOutIn", "ObsHeight", "ScanType", "ScanDir")]
-
-  ###Create the final table by joining the observations to the watches
-  final.df <- plyr::join(Watches2, Sighting2, by = "WatchID", type = "left", match = "all")
-
-  #Change the way the observer names are stored in the table
-  final.df$ObserverName <- as.factor(sapply(1:nrow( final.df),
-                                        function(i){gsub(", " , "_", as.character(final.df$ObserverName[i]) )}))
-
-  #Select or exlude the observers
+  # Select or exclude the observers
   if(!is.na(obs.exclude)){
-    keep1 <- setdiff(levels(final.df$ObserverName), obs.exclude)
-    final.df <- subset(final.df, final.df$ObserverName %in% keep1)
-    final.df <- droplevels(final.df)
+    watches %<>% dplyr::filter(!(ObserverName %in% obs.exclude))
   }
 
   if(!is.na(obs.keep)){
-    final.df <- subset(final.df, final.df$ObserverName %in% obs.keep)
-    final.df <- droplevels(final.df)
+    watches %<>% dplyr::filter(ObserverName %in% obs.keep)
   }
 
-  # Export the final product
-  return(droplevels(final.df))
-  
-  #End
+  # Merge and filter the tables for the sightings
+  sightings %<>% 
+    dplyr::left_join(speciesInfo, by = "SpecInfoID") %>% 
+    dplyr::left_join(distance, by = "DistanceCode") %>% 
+    dplyr::select(FlockID, WatchID, Alpha, English, Latin, Class, Seabird, Waterbird, ObsLat,
+                 ObsLong, ObsTime, Distance, DistanceCode, InTransect, Association, Behaviour,
+                 FlightDir, FlySwim, Count, Age, Plumage, Sex)
+
+  # Return the final product
+  if (ind.tables.only) {
+    list(watches = droplevels(watches), sightings = droplevels(sightings))
+  } else {
+    droplevels(dplyr::left_join(watches, sightings, by = "WatchID"))
+  }
+  # End
 }

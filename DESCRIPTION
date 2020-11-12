@@ -2,17 +2,17 @@ Package: ECSASconnect
 Type: Package
 Title: Import and export data from the Eastern Canada Seabirds at Sea (ECSAS)
     and the Suivi des oiseaux en mer de l'est du Canada (SOMEC) databases.
-Version: 0.6.7
+Version: 0.6.8
 Date: 2017-03-09
 Author: Christian Roy, Francois Rousseu, Dave Fifield
 Maintainer: Francois Bolduc <francois.Bolduc@ec.gc.ca>, Dave Fifield
     <dave.fifield@canada.ca>
-Description: This package will allow the user extract data from the ECSAS Access
+Description: This package will allow the user to extract data from the ECSAS Access
     database and to export data from the SOMEC to the ECSAS access database. The
     package will work only with R-32 bits since the drivers for Access only exist in
     32 bits.
 Depends:
-    plyr,
+    dplyr,
     RODBC,
     readxl,
     openxlsx,
@@ -20,3 +20,4 @@ Depends:
 License: GPL-2
 Encoding: UTF-8
 RoxygenNote: 7.1.1
+Roxygen: list(markdown = TRUE)
