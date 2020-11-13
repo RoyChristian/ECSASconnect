@@ -1,6 +1,7 @@
 #' @export
 #'@title Extract data from ECSAS database
 #'
+#'
 #'@description This function will connect to the Access database, create a series of queries and import the desired information in a data frame.
 #'
 #'@param species Optional. Alpha code (or vector of Alpha codes, e.g., c("COMU,"TBMU", "UNMU")) for the species desired in the extraction.
@@ -9,8 +10,9 @@
 #'@param long Vector of two numbers giving the western and eastern limits of the range desired. Note that west longitude values must be negative.
 #'@param obs.keep Names of the observers to keep for the extraction. Name format: Surname_FirstName (eg: "Bolduc_Francois").
 #'@param obs.exclude Name of the observer to exclude for the extraction. Name format: Surname_FirstName (eg: "Bolduc_Francois").
-#'@param sub.program From which sub.program the extraction must be made. Options are Quebec, Atlantic, Arctic, ESRF, AZMP, FSES, or All
-#'All subprograms will include the observations made in the PIROP program.
+#'@param sub.program From which sub.program the extraction must be made. Options are Quebec, Atlantic, 
+#'  Arctic, ESRF, AZMP, FSES, or All.
+#'  All subprograms will include the observations made in the PIROP program.
 #'@param intransect If TRUE (the default), return only observations coded as "In Transect", otherwise return all
 #'   observations. See the ECSAS survey protocol for more details: 
 #'   
@@ -18,9 +20,11 @@
 #'   2012. Eastern Canada Seabirds at Sea (ECSAS) standardized protocol for pelagic seabird surveys from 
 #'   moving and stationary platforms. Canadian Wildlife Service Technical Report Series No. 515. 
 #'   Atlantic Region. vi + 37 pp.
-#'@param distMeth Integer specifying the distance sampling method code (see tblWatch.DistMeth in ECSAS). Default 
-#'   is c(14, 20) which includes all watches with perpendicular distances for both flying and swimming birds. 
-#'   If "All", then observations from all distance sampling methods will be returned.
+#'@param distMeth Integer(s) specifying the distance sampling method code(s) (see tblWatch.DistMeth in ECSAS).
+#'   Acceptable values are a single integer, a vector of integers, or "All".
+#'   Default is c(14, 20) which includes all watches with perpendicular distances for both flying and swimming birds. 
+#'   If "All", then observations from all distance sampling methods will be returned, which may include
+#'   observations from the PIROP program if no other options preclude this.
 #'@param ecsas.path (default NULL) full path name to the ECSAS database. If NULL, the path is built from 
 #'   \code{ecsas.drive} and \code{ecsas.file}.
 #'@param ecsas.drive path to folder containing the ECSAS Access database
@@ -88,6 +92,9 @@ ECSAS.extract <-  function(species,
 # obs.exclude <- NA
 # obs.keep <- NA
 
+    # XXXX need to use package-checkmate to check all args.
+  
+  
   if(debug) browser()
   
   # test for 32-bit architecture
@@ -101,13 +108,31 @@ ECSAS.extract <-  function(species,
   distMeth.selection <- ""
   selected.sub.program <- ""
     
-  ### Make sure arguments works with sub.programs
+  # If no subprogram is specified then just leave sub-program out of it, which
+  # allows sub-program to be blank. Prior to version 0.6.8 it would only return
+  # watches where one of these was true.
   sub.program.names <- c("Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS")
-  if(any(is.na(match(sub.program, c(sub.program.names,"All"))))){
+  if(any(is.na(match(sub.program, c(sub.program.names, "All"))))){
      stop(paste("Unknown sub.program(s) specified. Sub-program should be one of: ",
                 paste(sub.program.names, collapse=" "), "or All"))
   }
-  sub.program <- match.arg(sub.program, several.ok=TRUE) #Not sure how to make it check for all argument names
+  # Not sure how to make it check for all argument names
+  sub.program <- match.arg(sub.program, several.ok = TRUE) 
+  
+  # If "All" is still in sub.program at this point then include all sub.programs
+  # in results, which just means not including anything in the sql WHERE clause
+  # for sub.program. Note that there are some cruises where none of the
+  # sub.programs is TRUE. "All" will be in sub.program either because it was
+  # there by default (and thus no sub.program was supplied by user), or because
+  # the user passed a sub.program arg which contains "All".
+  if(!any(sub.program == "All")){
+    selected.sub.program <- paste0("AND (", 
+                                  paste0(
+                                     paste0("(tblCruise.", sub.program[sub.program != "All"], ") = TRUE"), 
+                                      collapse=" OR "
+                                     ), 
+                                  ")")
+  }
 
   ###setwd and open connection
   if(!is.null(ecsas.path)) {
@@ -121,23 +146,30 @@ ECSAS.extract <-  function(species,
   where.start <-  "WHERE ((1=1)"
   where.end <- ")"
 
-  #Write SQL selection for intransect birds
+  # Write SQL selection for intransect birds
   if(intransect){
     intransect.selection <- "AND ((tblSighting.InTransect)=True)"
   }
 
-  #write SQL selection for latitude and longitude
+  # write SQL selection for latitude and longitude
   lat.selection <-  paste("AND ((tblWatch.LatStart)>=", lat[1], " And (tblWatch.LatStart)<=", lat[2], ")", sep="")
   long.selection <- paste("AND ((tblWatch.LongStart)>=", long[1], " And (tblWatch.LongStart)<=", long[2], ")", sep="")
 
-  # SQL for distMeth
+  # SQL for distMeth. 
+  #
+  # This is tricky...
+  # Due to lazy evaluation, the second clause in the if-statement will only 
+  #  ever be evaluated when length(distMeth) == 1, thus the second clause
+  #  makes sense and doesn't need any(..) wrapped around it.
+  # 
+  # distMeth can be:
+  #     a single number,
+  #     a vector of numbers, or
+  #     "All"
   if (length(distMeth) != 1 || distMeth != "All"){
-    distMeth.selection <- paste0("AND (",paste0(paste0("(tblWatch.DistMeth)=", distMeth), collapse= " OR "), ")")
-  }
-
-  #write SQL selection for the different type of sub.programs
-  if(any(sub.program != "All")){
-    selected.sub.program <- paste0("AND (", paste0(paste0("(tblCruise.", sub.program[sub.program != "All"], ")=TRUE"), collapse=" OR "), ")")
+    distMeth.selection <- paste0("AND (",
+                            paste0(
+                              paste0("(tblWatch.DistMeth)=", distMeth), collapse = " OR "), ")")
   }
 
   #write SQL selection for year

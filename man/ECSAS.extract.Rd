@@ -34,7 +34,8 @@ ECSAS.extract(
 
 \item{obs.exclude}{Name of the observer to exclude for the extraction. Name format: Surname_FirstName (eg: "Bolduc_Francois").}
 
-\item{sub.program}{From which sub.program the extraction must be made. Options are Quebec, Atlantic, Arctic, ESRF, AZMP, FSES, or All
+\item{sub.program}{From which sub.program the extraction must be made. Options are Quebec, Atlantic,
+Arctic, ESRF, AZMP, FSES, or All.
 All subprograms will include the observations made in the PIROP program.}
 
 \item{intransect}{If TRUE (the default), return only observations coded as "In Transect", otherwise return all
@@ -45,9 +46,11 @@ Gjerdrum, C., D.A. Fifield, and S.I. Wilhelm.
 moving and stationary platforms. Canadian Wildlife Service Technical Report Series No. 515.
 Atlantic Region. vi + 37 pp.}
 
-\item{distMeth}{Integer specifying the distance sampling method code (see tblWatch.DistMeth in ECSAS). Default
-is c(14, 20) which includes all watches with perpendicular distances for both flying and swimming birds.
-If "All", then observations from all distance sampling methods will be returned.}
+\item{distMeth}{Integer(s) specifying the distance sampling method code(s) (see tblWatch.DistMeth in ECSAS).
+Acceptable values are a single integer, a vector of integers, or "All".
+Default is c(14, 20) which includes all watches with perpendicular distances for both flying and swimming birds.
+If "All", then observations from all distance sampling methods will be returned, which may include
+observations from the PIROP program if no other options preclude this.}
 
 \item{ecsas.path}{(default NULL) full path name to the ECSAS database. If NULL, the path is built from
 \code{ecsas.drive} and \code{ecsas.file}.}
