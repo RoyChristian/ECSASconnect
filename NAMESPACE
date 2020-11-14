@@ -2,7 +2,7 @@
 
 export(ECSAS.create.transects)
 export(ECSAS.extract)
-export(ECSAS.find.suspicious.coords)
+export(ECSAS.find.suspicious.dist)
 export(QC.extract)
 export(SOMEC2ECSAS)
 export(buildSOMEC)
