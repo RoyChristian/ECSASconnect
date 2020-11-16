@@ -12,6 +12,7 @@ Description: This package will allow the user to extract data from the ECSAS Acc
     package will work only with R-32 bits since the drivers for Access only exist in
     32 bits.
 Depends:
+    checkmate,
     dplyr,
     RODBC,
     readxl,

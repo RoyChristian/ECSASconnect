@@ -2,7 +2,8 @@
 
 export(ECSAS.create.transects)
 export(ECSAS.extract)
-export(ECSAS.find.suspicious.dist)
+export(ECSAS.find.suspicious.posn)
+export(ECSAS.get.table)
 export(QC.extract)
 export(SOMEC2ECSAS)
 export(buildSOMEC)

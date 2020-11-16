@@ -1,9 +1,9 @@
 - add (at least) the lat/long to the SQL to cut down on amount of data return. and/or do joins in SQL to speed up
-- add function to create transects from individual watches  - started
+DONE - add function to create transects from individual watches  - started
 - add option to convert all fields with lookup tables to their proper values. Make this optional in order to protect legacy code that
   depends on old behaviour?? Thinking of any code that was used to extract data for the Urgence App. Was there any?
 - change name of platform.activity variable to platform.type. Confusing with PlatformActivity
-- add error checking for data returned from queries
+DONE - add error checking for data returned from queries
 - add "survey type" (or some such) arg to ecsas.extract to specify ship (default) or aerial.
 - add facility to insert aerial data
 - create a generic way of dealing with WHERE subclauses that require multiple matches (like species). Will need
@@ -23,7 +23,7 @@ ECSAS.extract. Maybe a list of name=value pairs or some such?? Or just don't bot
 - make variable name structure consistent (either camelCase or dotted.separation)
 - apply Hadley Wickhams style guide (http://adv-r.had.co.nz/Style.html) 
 - add unit tests
-- test return from sqlQuery for errors
+DONE - test return from sqlQuery for errors
 - add an option to select whether watches with zero obs are returned or not.
 - add option to remove zero or null length transects
 - add calculation for estimated windspeed if it is null and windforce is given

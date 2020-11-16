@@ -25,13 +25,14 @@
 #'   Default is c(14, 20) which includes all watches with perpendicular distances for both flying and swimming birds. 
 #'   If "All", then observations from all distance sampling methods will be returned, which may include
 #'   observations from the PIROP program if no other options preclude this.
+#'@param ind.tables.only Indicates if two individual tables for watch/cruise, and observations 
+#'   should be returned (default FALSE) rather than a single table with all columns combined.
+#'   See Value section.
 #'@param ecsas.path (default NULL) full path name to the ECSAS database. If NULL, the path is built from 
 #'   \code{ecsas.drive} and \code{ecsas.file}.
 #'@param ecsas.drive path to folder containing the ECSAS Access database
 #'@param ecsas.file  name of the ECSAS Access database file
-#'@param ind.tables.only Indicates if two individual tables for watch/cruise, and observations 
-#'   should be returned (default FALSE) rather than a single table with all columns combined.
-#'   See Value section.
+#'
 #'   
 #'@details 
 #'
@@ -63,21 +64,6 @@
 #'
 #'@seealso \code{\link{QC.extract}}
 
-ECSAS.extract <-  function(species, 
-                           years, 
-                           lat=c(-90,90), 
-                           long=c(-180, 180), 
-                           obs.keep=NA, 
-                           obs.exclude=NA,
-                           sub.program=c("All","Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS"), 
-                           intransect=TRUE, 
-                           distMeth = c(14, 20),
-                           ecsas.path = NULL,
-                           ecsas.drive="C:/Users/christian/Dropbox/ECSAS", 
-                           ecsas.file="Master ECSAS_backend v 3.31.mdb", 
-                           ind.tables.only = FALSE,
-                           debug = FALSE) {
-
 # debugging
 # rm(list=ls())
 # years <- c(2016)
@@ -92,10 +78,66 @@ ECSAS.extract <-  function(species,
 # obs.exclude <- NA
 # obs.keep <- NA
 
-    # XXXX need to use package-checkmate to check all args.
-  
-  
+ECSAS.extract <-  function(species = NULL, 
+                           years = NULL, 
+                           lat = c(-90,90), 
+                           long = c(-180, 180), 
+                           obs.keep = NA, 
+                           obs.exclude = NA,
+                           sub.program = c("All","Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS"), 
+                           intransect = TRUE, 
+                           distMeth = c(14, 20),
+                           ecsas.path = NULL,
+                           ecsas.drive = "C:/Users/christian/Dropbox/ECSAS", 
+                           ecsas.file = "Master ECSAS_backend v 3.31.mdb", 
+                           ind.tables.only = FALSE,
+                           debug = FALSE) {
+
   if(debug) browser()
+  
+  # check args
+  coll = checkmate::makeAssertCollection()
+  checkmate::assert(
+    checkmate::check_null(species),
+    checkmate::check_character(species, min.chars = 4, any.missing = FALSE), 
+    add = coll
+  )
+
+  checkmate::assert(
+    checkmate::check_null(years),
+    checkmate::check_integerish(years, any.missing = FALSE, len = 1),
+    checkmate::check_integerish(years, any.missing = FALSE, len = 2, sorted = TRUE),
+    add = coll
+  )
+
+  checkmate::assert_numeric(lat, any.missing = FALSE, len = 2, sorted = TRUE, add = coll)
+  checkmate::assert_numeric(long, any.missing = FALSE, len = 2, sorted = TRUE, add = coll)
+  checkmate::assert_character(obs.keep, min.len = 1, add = coll)
+  checkmate::assert_character(obs.exclude, min.len = 1, add = coll)
+  checkmate::assert_subset(sub.program, eval(formals()$sub.program), add = coll)
+  checkmate::assert_logical(intransect, len = 1, any.missing = FALSE, add = coll)
+  
+  checkmate::assert(
+    checkmate::check_integerish(distMeth, any.missing = FALSE, min.len = 1), 
+    checkmate::check_choice(distMeth, "All" ),
+    add = coll
+  )
+
+  checkmate::assert(
+    checkmate::check_file_exists(ecsas.path),
+    checkmate::check_file_exists(file.path(ecsas.drive, ecsas.file)), 
+    add = coll
+  )
+
+  checkmate::assert(
+    checkmate::check_null(ind.tables.only),
+    checkmate::check_logical(ind.tables.only, any.missing = FALSE, len = 1),
+    add = coll
+  )
+  
+  checkmate::assert_logical(debug, any.missing = FALSE, len = 1, add = coll)
+
+  reportAssertions(coll)
   
   # test for 32-bit architecture
   if (Sys.getenv("R_ARCH") != "/i386")
@@ -122,7 +164,9 @@ ECSAS.extract <-  function(species,
   # If "All" is still in sub.program at this point then include all sub.programs
   # in results, which just means not including anything in the sql WHERE clause
   # for sub.program. Note that there are some cruises where none of the
-  # sub.programs is TRUE. "All" will be in sub.program either because it was
+  # sub.programs is TRUE. 
+  #
+  # "All" will be in sub.program when we get here either because it was
   # there by default (and thus no sub.program was supplied by user), or because
   # the user passed a sub.program arg which contains "All".
   if(!any(sub.program == "All")){
@@ -163,9 +207,9 @@ ECSAS.extract <-  function(species,
   #  makes sense and doesn't need any(..) wrapped around it.
   # 
   # distMeth can be:
-  #     a single number,
-  #     a vector of numbers, or
-  #     "All"
+  #     a single number - if-statement executes,
+  #     a vector of numbers, - if-statement executes,
+  #     "All" - if-satement doesn't execute and thus distMeth is unconstrained.
   if (length(distMeth) != 1 || distMeth != "All"){
     distMeth.selection <- paste0("AND (",
                             paste0(

@@ -16,26 +16,37 @@ ECSAS.create.transects(
 \arguments{
 \item{dat}{a dataframe of ECSAS watches (1 row per watch).}
 
-\item{angle.thresh}{(default 90 degrees) changes in direction of more than this are considered to start new transects (currently not implemented)}
+\item{angle.thresh}{(default 90 degrees) changes in direction of more than
+this are considered to start new transects (currently not implemented)}
 
-\item{max.lag}{(default 10 minutes) the maximum time lag allowed between consecutive watches to be considered part of the same transect.}
+\item{max.lag}{(default 10 minutes) the maximum time lag allowed between
+consecutive watches to be considered part of the same transect.}
 
-\item{CRS}{if not null, the output coordinate system will be set CRS via \code{sp::spTransform}}
+\item{debug}{logical (default FALSE), should the debugger, \code{\link[base:browser]{base::browser()}},
+be used}
+
+\item{CRS}{if not null, the output coordinate system will be set CRS via
+\code{sp::spTransform}}
 
 \item{debug.watch}{watchid to stop at in for loop if debug is true}
 }
 \description{
-This function aggregates consecutive ECSAS watches into transects.
+This function aggregates consecutive ECSAS watches into
+transects.
 }
 \details{
-Combine watches into transects and create a spatiallinesdataframe for each transect in dat. Transects are defined as all
-consecutive watches by the same observer on the same vessel in the same direction on the same day.
+Combine watches into transects and create SpatialLinesDataFrame for
+each transect in \code{dat}. Transects are defined as all consecutive watches
+by the same observer on the same vessel in the same direction on the same day.
 
-rows in \code{dat} must contain at least columns named \code{ObserverName}, \code{PlatformDir},
-\code{PlatformName}, \code{Date}, \code{StartTime}, \code{EndTime}, \code{LatStart}, \code{LongStart}, \code{LatEnd},
-\code{LongEnd} as returned by \code{ECSAS.extract}.  \code{LatEnd} and \code{LongEnd} are only necessary for the last watch in
-in each transect to provide it's endpoint. If either is \code{NA}, the end point will be projected along a loxodrome based
-on the watch start location, \code{PlatformDir} (or \code{PlatformDirDeg} if it exists), \code{PlatformSpeed}, and \code{ObsLen}.
+Rows in \code{dat} must contain at least columns named \code{ObserverName},
+\code{PlatformDir}, \code{PlatformName}, \code{Date}, \code{StartTime},
+\code{EndTime}, \code{LatStart}, \code{LongStart}, \code{LatEnd},
+\code{LongEnd} as returned by \code{\link{ECSAS.extract()}}.  \code{LatEnd} and
+\code{LongEnd} are only necessary for the last watch in each transect to
+provide it's endpoint. If either is \code{NA}, the end point will be projected
+along a loxodrome based on the watch start location, \code{PlatformDir} (or
+\code{PlatformDirDeg} if it exists), \code{PlatformSpeed}, and \code{ObsLen}.
 If either of these is missing then an error is produced.
 }
 \section{Author}{

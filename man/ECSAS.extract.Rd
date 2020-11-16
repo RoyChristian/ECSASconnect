@@ -5,8 +5,8 @@
 \title{Extract data from ECSAS database}
 \usage{
 ECSAS.extract(
-  species,
-  years,
+  species = NULL,
+  years = NULL,
   lat = c(-90, 90),
   long = c(-180, 180),
   obs.keep = NA,
