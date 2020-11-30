@@ -20,7 +20,7 @@ too_many_rows <- function(e) {
   # fetch what sql* returned
   . <- get(".", parent.frame())
   
-  dat <- paste0(paste0(capture.output(.), collapes = "\n"), collapse = "")
+  dat <- paste0(paste0(utils::capture.output(.), collapse = "\n"), collapse = "")
   mess <- sprintf("%s\nIncorrect number of rows (%d) returned, expecting 1:\n%s", e$message, nrow(.), dat)
   
   stop(mess)

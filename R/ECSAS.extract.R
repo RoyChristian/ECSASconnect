@@ -1,65 +1,90 @@
-#' @export
+#'@export
 #'@title Extract data from ECSAS database
 #'
 #'
-#'@description This function will connect to the Access database, create a series of queries and import the desired information in a data frame.
+#'@description This function will connect to the Access database, create a
+#'  series of queries and import the desired information in a data frame.
 #'
-#'@param species Optional. Alpha code (or vector of Alpha codes, e.g., c("COMU,"TBMU", "UNMU")) for the species desired in the extraction.
-#'@param years Optional. Either a single year or a vector of two years denoting "from" and "to" (inclusive).
-#'@param lat Vector of two numbers giving the southern and northern limits of the range desired.
-#'@param long Vector of two numbers giving the western and eastern limits of the range desired. Note that west longitude values must be negative.
-#'@param obs.keep Names of the observers to keep for the extraction. Name format: Surname_FirstName (eg: "Bolduc_Francois").
-#'@param obs.exclude Name of the observer to exclude for the extraction. Name format: Surname_FirstName (eg: "Bolduc_Francois").
-#'@param sub.program From which sub.program the extraction must be made. Options are Quebec, Atlantic, 
-#'  Arctic, ESRF, AZMP, FSES, or All.
-#'  All subprograms will include the observations made in the PIROP program.
-#'@param intransect If TRUE (the default), return only observations coded as "In Transect", otherwise return all
-#'   observations. See the ECSAS survey protocol for more details: 
-#'   
-#'   Gjerdrum, C., D.A. Fifield, and S.I. Wilhelm.
-#'   2012. Eastern Canada Seabirds at Sea (ECSAS) standardized protocol for pelagic seabird surveys from 
-#'   moving and stationary platforms. Canadian Wildlife Service Technical Report Series No. 515. 
-#'   Atlantic Region. vi + 37 pp.
-#'@param distMeth Integer(s) specifying the distance sampling method code(s) (see tblWatch.DistMeth in ECSAS).
-#'   Acceptable values are a single integer, a vector of integers, or "All".
-#'   Default is c(14, 20) which includes all watches with perpendicular distances for both flying and swimming birds. 
-#'   If "All", then observations from all distance sampling methods will be returned, which may include
-#'   observations from the PIROP program if no other options preclude this.
-#'@param ind.tables.only Indicates if two individual tables for watch/cruise, and observations 
-#'   should be returned (default FALSE) rather than a single table with all columns combined.
-#'   See Value section.
-#'@param ecsas.path (default NULL) full path name to the ECSAS database. If NULL, the path is built from 
-#'   \code{ecsas.drive} and \code{ecsas.file}.
-#'@param ecsas.drive path to folder containing the ECSAS Access database
-#'@param ecsas.file  name of the ECSAS Access database file
+#'@param species \[character:\sQuote{NULL}]\cr Optional. Alpha code (or vector
+#'  of Alpha codes, e.g., c("COMU,"TBMU", "UNMU")) for the species desired in
+#'  the extraction.
+#'@param years \[integer:\sQuote{NULL}]\cr Optional. Either a single year or a
+#'  vector of two years denoting "from" and "to" (inclusive).
+#'@param lat \[numeric(2):\sQuote{\code{c(-90, 90)}}] \cr Vector of two numbers
+#'  giving the southern and northern limits of the range desired.
+#'@param long \[numeric(2):\sQuote{\code{c(-180, 180)}}] \cr Vector of two
+#'  numbers giving the western and eastern limits of the range desired. Note
+#'  that west longitude values must be negative.
+#'@param obs.keep \[character:\sQuote{NA}]\cr Names of the observers to keep for
+#'  the extraction. Name format: Surname_FirstName (eg: "Bolduc_Francois").
+#'@param obs.exclude \[character:\sQuote{NA}]\cr Name of the observer to exclude
+#'  for the extraction. Name format: Surname_FirstName (eg: "Bolduc_Francois").
+#'@param sub.program
+#'  \[character:\sQuote{\code{c("All","Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS")}}]\cr
+#'   From which sub.program the extraction must be made. \sQuote{\code{All}}
+#'  subprograms will include the observations made in the PIROP program.
+#'@param intransect \[logical(1):\sQuote{TRUE}]\cr If TRUE, return only
+#'  observations coded as "In Transect", otherwise return all observations. See
+#'  the ECSAS survey protocol for more details:
 #'
-#'   
-#'@details 
+#'  Gjerdrum, C., D.A. Fifield, and S.I. Wilhelm. 2012. Eastern Canada Seabirds
+#'  at Sea (ECSAS) standardized protocol for pelagic seabird surveys from moving
+#'  and stationary platforms. Canadian Wildlife Service Technical Report Series
+#'  No. 515. Atlantic Region. vi + 37 pp.
+#'@param distMeth \[integer or character:\sQuote{\code{c(14,20)}}]\cr Integer(s)
+#'  specifying the distance sampling method code(s) (see tblWatch.DistMeth in
+#'  ECSAS). Acceptable values are a single integer, a vector of integers, or
+#'  \sQuote{\code{All}}. The default will includes all watches with
+#'  perpendicular distances for both flying and swimming birds. If
+#'  \sQuote{\code{All}}, then observations from all distance sampling methods
+#'  will be returned, which may include observations from the PIROP program if
+#'  no other options preclude this.
+#'@param ind.tables.only \[logical(1):\sQuote{FALSE}]\cr Indicates if two
+#'  individual tables for watch/cruise, and observations should be returned
+#'  rather than a single table with all columns combined. See Value section.
+#'@param ecsas.path \[character:\sQuote{NULL}]\cr Full path name to the ECSAS
+#'  database. If NULL, the path is built from \code{ecsas.drive} and
+#'  \code{ecsas.file}.
+#'@param ecsas.drive
+#'  \[character:\sQuote{\code{"C:/Users/christian/Dropbox/ECSAS"}}]\cr Path to
+#'  folder containing the ECSAS Access database. The default value is likely no
+#'  longer useful and should be deprecated.
+#'@param ecsas.file  \[character:\sQuote{\code{"Master ECSAS_backend v
+#'  3.31.mdb"}}]\cr Name of the ECSAS Access database file. The default value is
+#'  likely no longer useful and should be deprecated.
 #'
-#'The distance traveled during the watch is returned in the column \code{WatchLenKm}. If lat/long coordinates
-#'are available for both the start and end locations of the watch, then it is calculated as the shortest 
-#'distance between these two points on the WGS84 ellipsoid using [geosphere::distGeo()] and, in this case,
-#'\code{WatchLenKmHow} will contain \code{"distGeo"}. Otherwise \code{WatchLenKm} 
-#'is calculated as the \code{PlatformSpeed * CalcDurMin} where \code{CalcDurMin} is the length of the 
-#'watch in minutes computed from start and end times. In this case, \code{WatchLenKmHow} will contain 
-#'\code{"Dead Reckoning"}. 
-#' 
-#'@return By default the function will produce a data frame that contains all the pertinent information. 
-#' Note that watches with no observations (the so called "zeros" are included by default).
-#' 
-#' If \code{ind.tables.only} is \code{FALSE} (the default), then a single dataframe is returned
-#' containing all pertinent cruise, watch and sightings table info for each observation. If a given watch had
-#' no observations, then sighting related fields will be \code{NA}.
-#' 
-#' If \code{ind.tables.only} is \code{TRUE}, then a list is returned with the following elements:
-#' 
-#' \tabular{ll}{
-#'   \code{watches} \tab the combined columns from the watch and cruise tables only.\cr
-#'   \code{sightings}\tab the columns from the sightings table only.
-#' }
-#' 
-#' Note it is not currently possible to extract the watch and cruise tables separately.
-#' 
+#'
+#'@details
+#'
+#'The distance traveled during the watch is returned in the column
+#'\code{WatchLenKm}. If lat/long coordinates are available for both the start
+#'and end locations of the watch, then it is calculated as the shortest distance
+#'between these two points on the WGS84 ellipsoid using [geosphere::distGeo()]
+#'and, in this case, \code{WatchLenKmHow} will contain \code{"distGeo"}.
+#'Otherwise \code{WatchLenKm} is calculated as the \code{PlatformSpeed *
+#'CalcDurMin} where \code{CalcDurMin} is the length of the watch in minutes
+#'computed from start and end times. In this case, \code{WatchLenKmHow} will
+#'contain \code{"Dead Reckoning"}.
+#'
+#'@return By default the function will produce a data frame that contains all
+#'  the pertinent information. Note that watches with no observations (the so
+#'  called "zeros" are included by default).
+#'
+#'  If \code{ind.tables.only} is \code{FALSE} (the default), then a single
+#'  dataframe is returned containing all pertinent cruise, watch and sightings
+#'  table info for each observation. If a given watch had no observations, then
+#'  sighting related fields will be \code{NA}.
+#'
+#'  If \code{ind.tables.only} is \code{TRUE}, then a list is returned with the
+#'  following elements:
+#'
+#'  \tabular{ll}{ \code{watches} \tab the combined columns from the watch and
+#'  cruise tables only.\cr \code{sightings}\tab the columns from the sightings
+#'  table only. }
+#'
+#'  Note it is not currently possible to extract the watch and cruise tables
+#'  separately.
+#'
 #'@section Author:Christian Roy, Dave Fifield
 #'
 #'@seealso \code{\link{QC.extract}}
@@ -87,22 +112,23 @@ ECSAS.extract <-  function(species = NULL,
                            sub.program = c("All","Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS"), 
                            intransect = TRUE, 
                            distMeth = c(14, 20),
+                           ind.tables.only = FALSE,
                            ecsas.path = NULL,
                            ecsas.drive = "C:/Users/christian/Dropbox/ECSAS", 
                            ecsas.file = "Master ECSAS_backend v 3.31.mdb", 
-                           ind.tables.only = FALSE,
                            debug = FALSE) {
 
   if(debug) browser()
   
   # check args
   coll = checkmate::makeAssertCollection()
+  
   checkmate::assert(
     checkmate::check_null(species),
-    checkmate::check_character(species, min.chars = 4, any.missing = FALSE), 
+    check_string_len(species, len = 4), 
     add = coll
   )
-
+  
   checkmate::assert(
     checkmate::check_null(years),
     checkmate::check_integerish(years, any.missing = FALSE, len = 1),
@@ -136,8 +162,7 @@ ECSAS.extract <-  function(species = NULL,
   )
   
   checkmate::assert_logical(debug, any.missing = FALSE, len = 1, add = coll)
-
-  reportAssertions(coll)
+  checkmate::reportAssertions(coll)
   
   # test for 32-bit architecture
   if (Sys.getenv("R_ARCH") != "/i386")
@@ -404,7 +429,7 @@ ECSAS.extract <-  function(species = NULL,
     dplyr::left_join(platform.name, by = "PlatformID") %>% 
     dplyr::left_join(platform.activity, by = "PlatformTypeID") %>% 
     dplyr::left_join(cruise.notes, by = "CruiseID") %>% 
-    mutate(ObserverName = as.factor(gsub(", " , "_", as.character(ObserverName)))) %>% 
+    dplyr::mutate(ObserverName = as.factor(gsub(", " , "_", as.character(ObserverName)))) %>% 
     dplyr::select(CruiseID, CruiseNote, Program, PlatformName, Atlantic, Quebec, Arctic, ESRF, 
                   AZMP, FSRS, StartDate, EndDate, WatchID, TransectNo, ObserverName, PlatformClass, 
                   WhatCount, TransNearEdge, TransFarEdge, DistMeth, Date, Year, Month, Week, Day,
