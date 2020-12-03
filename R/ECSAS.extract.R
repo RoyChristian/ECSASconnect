@@ -407,8 +407,9 @@ ECSAS.extract <-  function(species = NULL,
     dplyr::rename(PlatformName = PlatformText)
   platform.activity <- RODBC::sqlFetch(channel1, "lkpPlatformType") %>% ensure_data_is_returned 
   seastates <- RODBC::sqlFetch(channel1, "lkpSeastate") %>% ensure_data_is_returned 
+  
   #close connection
-  RODBC::odbcCloseAll()
+  RODBC::odbcClose(channel1)
 
   # Calculate watch length in km via dead reckoning if start and end positions
   # are not avail, otherwise use ellipsoid method. Note use of more accurate

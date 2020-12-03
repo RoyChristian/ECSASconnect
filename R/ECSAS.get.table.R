@@ -30,4 +30,7 @@ ECSAS.get.table <-  function(ecsas.path = NULL, table = NULL, debug = FALSE) {
   channel1 <- RODBC::odbcConnectAccess(ecsas.path, uid="") 
   
   ret <- RODBC::sqlFetch(channel1, table) %>% ensure_data_is_returned 
+  RODBC::odbcClose(channecl1)
+  
+  ret
 }
