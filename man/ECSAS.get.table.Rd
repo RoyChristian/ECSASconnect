@@ -4,12 +4,12 @@
 \alias{ECSAS.get.table}
 \title{Get ECSAS table from database}
 \usage{
-ECSAS.get.table(ecsas.path = NULL, table = NULL, debug = FALSE)
+ECSAS.get.table(table = NULL, ecsas.path = NULL, debug = FALSE)
 }
 \arguments{
-\item{ecsas.path}{(default NULL) full path name to the ECSAS database.}
-
 \item{table}{character vector (of length 1) naming table to be returned.}
+
+\item{ecsas.path}{(default NULL) full path name to the ECSAS database.}
 }
 \description{
 This function will connect to the Access database and return a table as a data frame.
