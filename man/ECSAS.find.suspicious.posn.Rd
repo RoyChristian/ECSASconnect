@@ -50,9 +50,9 @@ measures is \code{>= diff.thresh.pct} percent of the smaller of the two distance
 Secondly, for watches with both start and end positions, it looks for watches that would require an
 unreasonable speed (greater than \code{speed.thresh}) to achieve that distance during the watch (given by
 \code{dat$CalcDurMin}).
-
-\bold{Note:} all rows meeting the heuristic thresholds are returned even if there are multiple rows
-for the same watch, as occurs when there are multiple observations per watch in \code{dat}.
+}
+\note{
+Only returns one row per watch even if there are multiple observations per watch.
 }
 \section{Author}{
 Dave Fifield

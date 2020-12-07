@@ -15,9 +15,6 @@
 #'  unreasonable speed (greater than \code{speed.thresh}) to achieve that distance during the watch (given by
 #'  \code{dat$CalcDurMin}).
 #' 
-#' \bold{Note:} all rows meeting the heuristic thresholds are returned even if there are multiple rows
-#' for the same watch, as occurs when there are multiple observations per watch in \code{dat}.
-#'  
 #'@param dat a dataframe, such as returned by \code{\link{ECSAS.extract()}}, containing, at a minimum, fields
 #'  named \code{LatStart, LatEnd, LongStart, LongEnd, PlatformSpeed, CalcDurMin.}
 #'  
@@ -40,6 +37,8 @@
 #'      end location during \code{CalcDurMin}
 #' }
 #' 
+#'@note Only returns one row per watch even if there are multiple observations per watch.
+#'
 #'@section Author:Dave Fifield
 #'
 #'@seealso \code{\link{ECSAS.extract()}}
@@ -51,6 +50,7 @@ ECSAS.find.suspicious.posn <- function(dat = NULL, diff.thresh.pct = 50, speed.t
   # do arg checking
   
   dat %>% 
+    distinct(CruiseID, WatchID, .keep_all = T) %>% 
     dplyr::mutate(dist_dr_km = PlatformSpeed * (CalcDurMin / 60) * 1.852,
            dist_geo_km = geosphere::distGeo(cbind(LongStart, LatStart), cbind(LongEnd,  LatEnd))/1000,
            dist_diff_km = abs(dist_dr_km - dist_geo_km),
