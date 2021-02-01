@@ -8,6 +8,7 @@ ECSAS.find.suspicious.posn(
   dat = NULL,
   diff.thresh.pct = 50,
   speed.thresh = 20,
+  leave = NULL,
   debug = FALSE
 )
 }
@@ -21,6 +22,9 @@ difference is allowed to be before being flagged as problematic.}
 \item{speed.thresh}{(numeric, in knots, default 20) the function will return watches where the speed required to achieve the
 distance traveled (given by start and end coordinates) would be greater than
 \code{speed.thresh}.}
+
+\item{leave}{(numeric, debualt NULL) vector of WatchID's to ignore problems with. Typically these
+will have been vetted by hand.}
 }
 \value{
 Returns \code{dat} with the following additional columns added:

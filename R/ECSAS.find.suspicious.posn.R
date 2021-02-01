@@ -24,6 +24,9 @@
 #'@param speed.thresh (numeric, in knots, default 20) the function will return watches where the speed required to achieve the 
 #'   distance traveled (given by start and end coordinates) would be greater than 
 #'   \code{speed.thresh}.
+#'   
+#'@param leave (numeric, debualt NULL) vector of WatchID's to ignore problems with. Typically these 
+#'   will have been vetted by hand.
 #'
 #'@return Returns \code{dat} with the following additional columns added:
 #'
@@ -43,11 +46,12 @@
 #'
 #'@seealso \code{\link{ECSAS.extract()}}
 #'
-ECSAS.find.suspicious.posn <- function(dat = NULL, diff.thresh.pct = 50, speed.thresh = 20, debug = FALSE){
+ECSAS.find.suspicious.posn <- function(dat = NULL, diff.thresh.pct = 50, speed.thresh = 20, 
+                                       leave = NULL, debug = FALSE){
   
   if(debug) browser()
   
-  # do arg checking
+  # need to do arg checking
   
   dat %>% 
     distinct(CruiseID, WatchID, .keep_all = T) %>% 
@@ -60,5 +64,6 @@ ECSAS.find.suspicious.posn <- function(dat = NULL, diff.thresh.pct = 50, speed.t
                                                 NA_real_,
             TRUE ~ (dist_geo_km/1.852)/(CalcDurMin/60))
     ) %>% 
-    dplyr::filter(pct_diff >= diff.thresh.pct | reqd_speed > speed.thresh)
+    dplyr::filter((pct_diff >= diff.thresh.pct | reqd_speed > speed.thresh) &
+                   !(WatchID %in% leave))
 }

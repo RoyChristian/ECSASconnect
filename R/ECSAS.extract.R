@@ -10,6 +10,7 @@
 #'  the extraction.
 #'@param years \[integer:\sQuote{NULL}]\cr Optional. Either a single year or a
 #'  vector of two years denoting "from" and "to" (inclusive).
+#'@param cruise.ids \[integer:\sQuote{NULL}]\cr Optional. Integer vector of cruise ID's to extract.
 #'@param lat \[numeric(2):\sQuote{\code{c(-90, 90)}}] \cr Vector of two numbers
 #'  giving the southern and northern limits of the range desired.
 #'@param long \[numeric(2):\sQuote{\code{c(-180, 180)}}] \cr Vector of two
@@ -105,6 +106,7 @@
 
 ECSAS.extract <-  function(species = NULL, 
                            years = NULL, 
+                           cruise.ids = NULL,
                            lat = c(-90,90), 
                            long = c(-180, 180), 
                            obs.keep = NA, 
@@ -133,6 +135,12 @@ ECSAS.extract <-  function(species = NULL,
     checkmate::check_null(years),
     checkmate::check_integerish(years, any.missing = FALSE, len = 1),
     checkmate::check_integerish(years, any.missing = FALSE, len = 2, sorted = TRUE),
+    add = coll
+  )
+
+  checkmate::assert(
+    checkmate::check_null(cruise.ids),
+    checkmate::check_integerish(cruise.ids, any.missing = FALSE),
     add = coll
   )
 
@@ -171,6 +179,7 @@ ECSAS.extract <-  function(species = NULL,
   # initialize various SQL sub-clauses here. Simplifies if-then-else logic below.
   intransect.selection <- ""  
   year.selection <- ""
+  cruise.ids.selection <- ""
   sp.selection <- ""
   distMeth.selection <- ""
   selected.sub.program <- ""
@@ -238,9 +247,18 @@ ECSAS.extract <-  function(species = NULL,
   if (length(distMeth) != 1 || distMeth != "All"){
     distMeth.selection <- paste0("AND (",
                             paste0(
-                              paste0("(tblWatch.DistMeth)=", distMeth), collapse = " OR "), ")")
+                              paste0("(tblWatch.DistMeth)=", distMeth), 
+                            collapse = " OR "), ")")
   }
 
+  # Deal with cruise.ids if supplied
+  if (!is.null(cruise.ids)) {
+  cruise.ids.selection <- paste0("AND (",
+                            paste0(
+                              paste0("(tblWatch.CruiseID)=", cruise.ids), 
+                            collapse = " OR "), ")")
+  }
+  
   #write SQL selection for year
   if (!missing(years)) {
     if(length(years) == 1)
@@ -267,7 +285,7 @@ ECSAS.extract <-  function(species = NULL,
     sep = " "
   )
 
-  # Execute query for species.Remove speciesinfo records where Alpha is NA, since
+  # Execute query for species. Remove speciesinfo records where Alpha is NA, since
   # they can't currently be specified for selection anyway. 
   speciesInfo <-  RODBC::sqlQuery(channel1, query.species) %>% 
     ensure_data_is_returned %>% 
@@ -323,6 +341,7 @@ ECSAS.extract <-  function(species = NULL,
                                intransect.selection,
                                distMeth.selection,
                                year.selection,
+                               cruise.ids.selection,
                                where.end,
                                sep = " "
                         )
@@ -388,6 +407,7 @@ ECSAS.extract <-  function(species = NULL,
                                 long.selection,
                                 #"AND ((([PlatformSpeed]*[ObsLen]/60*1.852)) Is Not Null And (([PlatformSpeed]*[ObsLen]/60*1.852))>0)",
                                 distMeth.selection,
+                                cruise.ids.selection,
                                 selected.sub.program,
                                 year.selection,
                                 where.end,

@@ -1,3 +1,5 @@
+- Dec 2020 - add option to ECSAS.create.transects() to continue the transect as long as it doesn't deviate
+  by more than xx degrees. Requires start and end positions.
 - add (at least) the lat/long to the SQL to cut down on amount of data return. and/or do joins in SQL to speed up
 DONE - add function to create transects from individual watches  - started
 - add option to convert all fields with lookup tables to their proper values. Make this optional in order to protect legacy code that
@@ -9,7 +11,7 @@ DONE - add error checking for data returned from queries
 - create a generic way of dealing with WHERE subclauses that require multiple matches (like species). Will need
 	this often.
 - deal with cruises where there were two observers (one on each side)
-- combine the multiple queries for watch, sighting, etc into one
+- combine the multiple queries for watch, sighting, etc into one???
 - add facility to select Program (ECSAS, PIROP, etc)
 - add facility to specify minimum speed
 - add ability to specify moving surveys (not stationary)
@@ -19,7 +21,7 @@ DONE - add error checking for data returned from queries
 - add "classType" argument ie. Bird, Mammal, etc
 - figure out if database is open for exclusive use, 
 - come up with a more generic method for specifying filtering options instead of adding a separate param everytime to
-ECSAS.extract. Maybe a list of name=value pairs or some such?? Or just don't bother and do filtering in calling program.
+ECSAS.extract. Maybe a list of name=value pairs or some such?? Or just don't bother and do filtering in calling program. Leaning toward the latter.
 - make variable name structure consistent (either camelCase or dotted.separation)
 - apply Hadley Wickhams style guide (http://adv-r.had.co.nz/Style.html) 
 - add unit tests

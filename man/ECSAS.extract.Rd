@@ -7,6 +7,7 @@
 ECSAS.extract(
   species = NULL,
   years = NULL,
+  cruise.ids = NULL,
   lat = c(-90, 90),
   long = c(-180, 180),
   obs.keep = NA,
@@ -28,6 +29,8 @@ the extraction.}
 
 \item{years}{[integer:\sQuote{NULL}]\cr Optional. Either a single year or a
 vector of two years denoting "from" and "to" (inclusive).}
+
+\item{cruise.ids}{[integer:\sQuote{NULL}]\cr Optional. Integer vector of cruise ID's to extract.}
 
 \item{lat}{[numeric(2):\sQuote{\code{c(-90, 90)}}] \cr Vector of two numbers
 giving the southern and northern limits of the range desired.}

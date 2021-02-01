@@ -80,6 +80,7 @@ ECSAS.create.transects <- function(dat, angle.thresh = NULL, max.lag = 10, debug
       cur.day <- row$Date
     }  
     
+    # Fill in Sample.Label for this row.
     if(is.na(dat[i, "Sample.Label"]))
       dat[i, "Sample.Label"] <- Sample.Label
   }
@@ -90,7 +91,7 @@ ECSAS.create.transects <- function(dat, angle.thresh = NULL, max.lag = 10, debug
   dat <- split(dat, dat$Sample.Label) %>% 
     purrr::map_df(add.final.point) %>% 
     dplyr::mutate(save.lat = LatStart,
-           save.long = LongStart) # protect from removal by coordinates()
+           save.long = LongStart) # protect from removal by coordinates(), not needed if add.final.point is updated to use SpatialPointsDataFrame to create instead of coordinates()???
 
   # create lines object
   sp::coordinates(dat) <- ~ LongStart + LatStart
