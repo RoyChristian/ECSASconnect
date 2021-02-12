@@ -106,6 +106,7 @@ ECSAS.create.transects <- function(dat, angle.thresh = NULL, max.lag = 10, debug
     dplyr::group_by(Sample.Label) %>% 
     dplyr::summarize(
               CruiseID = unique(CruiseID),
+              Program = unique(Program),
               Date = unique(Date),
               StartTime = min(as.POSIXct(StartTime, format="%H:%M:%S")),
               EndTime = max(as.POSIXct(EndTime, format="%H:%M:%S")),
