@@ -285,11 +285,9 @@ ECSAS.extract <-  function(species = NULL,
     sep = " "
   )
 
-  # Execute query for species. Remove speciesinfo records where Alpha is NA, since
-  # they can't currently be specified for selection anyway. 
+  # Execute query for species.  
   speciesInfo <-  RODBC::sqlQuery(channel1, query.species) %>% 
-    ensure_data_is_returned %>% 
-    dplyr::filter(!is.na(Alpha))
+    ensure_data_is_returned 
     
   # handle species specification
   if (!missing(species)) {
