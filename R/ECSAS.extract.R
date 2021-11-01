@@ -379,6 +379,7 @@ ECSAS.extract <-  function(species = NULL,
                                 "tblWatch.SeaState",
                                 "tblWatch.Windspeed",
                                 "tblWatch.Windforce",
+                                "tblWatch.WindDir",
                                 "tblWatch.Weather",
                                 "tblWatch.Glare",
                                 "tblWatch.Swell",
@@ -454,7 +455,7 @@ ECSAS.extract <-  function(species = NULL,
                   WhatCount, TransNearEdge, TransFarEdge, DistMeth, Date, Year, Month, Week, Day,
                   StartTime, EndTime, CalcDurMin, LatStart, LongStart, LatEnd, LongEnd, PlatformSpeed,
                   PlatformDir, PlatformDirDeg, PlatformActivity, ObsLen, WatchLenKm, WatchLenKmHow,
-                  Snapshot, Experience, Visibility, SeaState, Swell, Windspeed, Windforce, Weather, 
+                  Snapshot, Experience, Visibility, SeaState, Swell, Windspeed, Windforce, WindDir, Weather, 
                   Glare, IceType, IceConc, ObsSide, ObsOutIn, ObsHeight, ScanType, ScanDir)
 
   # Select or exclude the observers
