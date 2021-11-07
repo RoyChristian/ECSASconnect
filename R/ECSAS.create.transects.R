@@ -124,7 +124,7 @@ ECSAS.create.transects <- function(dat, angle.thresh = NULL, max.lag = 10, debug
   
   rownames(data) <- data$Sample.Label
   l <- sp::SpatialLinesDataFrame(lines, data)
-  sp::proj4string(l) <- sp::CRS(latlongproj)
+  sp::proj4string(l) <- sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
   if (!is.null(CRS))
     l <- sp::spTransform(l, CRS)
   l
