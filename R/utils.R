@@ -12,8 +12,7 @@ add.final.point <- function(df, debug = FALSE){
 
   # "Start" location of endpoint is the end loc of last watch
   last.point %<>%
-    dplyr::mutate(LatStart = LatEnd,
-           LongStart = LongEnd,
+    dplyr::mutate(LatStart = LatEnd, LongStart = LongEnd,
            WatchLenKm = 0) # Don't want last point to add spurious extra length
   
 
@@ -26,13 +25,13 @@ add.final.point <- function(df, debug = FALSE){
 project.endpoint <- function(row, debug = FALSE) {
   if(debug) browser()
   
-  if(is.empty(row$LongStart) || is.empty(row$LatStart) || is.empty(row$ObsLen) ||
+  if(is.empty(row$LongStart) || is.empty(row$LatStart) || is.empty(row$CalcDurMin) ||
      is.empty(row$PlatformSpeed))
-    stop("Error: project.endpoint: one of required variables is empty.")
+    stop("Error: project.endpoint: one of LongStart, LatStart, CalcDurMin, or PlatformSpeed is empty.")
   
   p <- with(row, geosphere::destPoint(cbind(LongStart, LatStart), 
                                       b = as.numeric(as.character(get.platform.direction(row))), 
-                                      d = ((ObsLen/60) * PlatformSpeed * 1.852) * 1000))
+                                      d = ((CalCDurMin/60) * PlatformSpeed * 1.852) * 1000))
   row %>% 
     dplyr::mutate(LongEnd = p[,1],
            LatEnd = p[,2],

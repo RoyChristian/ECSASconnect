@@ -14,8 +14,8 @@
 #'  be used
 #'@param debug.watch watchid to stop at in for loop if debug is true
 #'
-#'@details Combine watches into transects and create SpatialLinesDataFrame for
-#'each transect in \code{dat}. Transects are defined as all consecutive watches
+#'@details Combine watches in \code{dat} into transects and return a SpatialLinesDataFrame.
+#'A transect is defined as all consecutive watches
 #'by the same observer on the same vessel in the same direction on the same day.
 #'
 #'Rows in \code{dat} must contain at least columns named \code{ObserverName},
@@ -128,5 +128,23 @@ ECSAS.create.transects <- function(dat, angle.thresh = NULL, max.lag = 10, debug
   if (!is.null(CRS))
     l <- sp::spTransform(l, CRS)
   l
+}
+
+
+#'@export
+#'@title Find transect that each watch belongs to
+#'
+#'@description This function will return the transect id of a watch.
+#' 
+#'@param trns a transect object as returned by \code{ECSAS.create.transects()}.
+#'@param watchid WatchID of interest
+#'
+#'@details Simpy looks for any transects in \code{trns} that includes \code{watchid} in its
+#' \code{Watches} column.
+#'
+#
+# Given a watchID find which transect has that watch in it. Uses the fact that trns$Watches is a list column
+ECSAS.find.trans <- function(trns, watchid){
+  trns[map_lgl(trns$Watches, ~  as.character(watchid) %in% .),]$Sample.Label
 }
 
