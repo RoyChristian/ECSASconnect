@@ -31,7 +31,7 @@ project.endpoint <- function(row, debug = FALSE) {
   
   p <- with(row, geosphere::destPoint(cbind(LongStart, LatStart), 
                                       b = as.numeric(as.character(get.platform.direction(row))), 
-                                      d = ((CalCDurMin/60) * PlatformSpeed * 1.852) * 1000))
+                                      d = ((CalcDurMin/60) * PlatformSpeed * 1.852) * 1000))
   row %>% 
     dplyr::mutate(LongEnd = p[,1],
            LatEnd = p[,2],

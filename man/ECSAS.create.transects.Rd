@@ -35,8 +35,8 @@ This function aggregates consecutive ECSAS watches into
 transects.
 }
 \details{
-Combine watches into transects and create SpatialLinesDataFrame for
-each transect in \code{dat}. Transects are defined as all consecutive watches
+Combine watches in \code{dat} into transects and return a SpatialLinesDataFrame.
+A transect is defined as all consecutive watches
 by the same observer on the same vessel in the same direction on the same day.
 
 Rows in \code{dat} must contain at least columns named \code{ObserverName},

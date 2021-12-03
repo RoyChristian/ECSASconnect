@@ -122,7 +122,7 @@ ECSAS.create.transects <- function(dat, angle.thresh = NULL, max.lag = 10, debug
     ) %>% 
     as.data.frame()
   
-  rownames(data) <- data$Sample.Label
+  rownames(data) <- data$Sample.Label # deprecated for tibbles. not sure what it was used for
   l <- sp::SpatialLinesDataFrame(lines, data)
   sp::proj4string(l) <- sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
   if (!is.null(CRS))
@@ -130,21 +130,34 @@ ECSAS.create.transects <- function(dat, angle.thresh = NULL, max.lag = 10, debug
   l
 }
 
-
 #'@export
-#'@title Find transect that each watch belongs to
+#'@title Add sample labels to a dataframe of watches
 #'
-#'@description This function will return the transect id of a watch.
+#'@description Add a \code{Sample.Label} column to \code{wtchs} and set it to the
+#' corresponding \code{Sample.Label} from \code{trns} that each watch belongs to.
 #' 
+#'@param wtchs a dataframe of watches containing at least a column name WatchID
 #'@param trns a transect object as returned by \code{ECSAS.create.transects()}.
-#'@param watchid WatchID of interest
 #'
-#'@details Simpy looks for any transects in \code{trns} that includes \code{watchid} in its
-#' \code{Watches} column.
+#'@details Simpy unnests the \code{Watches} list-column from \code{trns} and joins
+#' it to the \code{wtchs} dataframe matching on \code{WatchID}. Replaces existing 
+#'\code{Sample.Label} column if it exists. Throws an error if any row of \code{trns}
+#'has no associated watches.
 #'
-#
-# Given a watchID find which transect has that watch in it. Uses the fact that trns$Watches is a list column
-ECSAS.find.trans <- function(trns, watchid){
-  trns[map_lgl(trns$Watches, ~  as.character(watchid) %in% .),]$Sample.Label
+ECSAS.add.sample.label <- function(wtchs, trns) {
+  
+  # make sure all transects have at least one watch
+  stopifnot(all(map_int(transects.sp@data$Watches, length) > 0))
+  
+  # Remove existing Sample.Label column
+  if ("Sample.Label" %in% names(wtchs)) wtchs %<>% select(-Sample.Label)
+  
+  # unnest list column into individual row for each unique value in Watches,
+  # select sample.Label and Watches columns, 
+  # rename Watches to WatchID and
+  # join to wtchs
+  unnest(trns, Watches) %>% 
+    select(Sample.Label, Watches) %>% 
+    rename(WatchID = Watches) %>% 
+    right_join(wtchs, by = "WatchID")
 }
-
