@@ -260,7 +260,7 @@ ECSAS.extract <-  function(species = NULL,
   }
   
   #write SQL selection for year
-  if (!missing(years)) {
+  if (!missing(years) && !is.null(years)) { # Years provided and not null?
     if(length(years) == 1)
       year.selection <- paste0("AND ((DatePart('yyyy',[Date])) = ", years, ")")
     else if (length(years) == 2)
