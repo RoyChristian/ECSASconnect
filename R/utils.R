@@ -5,6 +5,9 @@ is.empty <- function(x){
 # Add a final point at the end of a transect
 add.final.point <- function(df, debug = FALSE){
   if(debug) browser()
+  
+  # can't remember what this is for, but judging by the code below, perhaps
+  # in some use cases the sample_label is stored in the rowname??
   rn <- row.names(df)
   last.point <- df[nrow(df),]
   if(is.na(last.point$LatEnd) || is.na(last.point$LongEnd))
@@ -15,7 +18,6 @@ add.final.point <- function(df, debug = FALSE){
     dplyr::mutate(LatStart = LatEnd, LongStart = LongEnd,
            WatchLenKm = 0) # Don't want last point to add spurious extra length
   
-
   df <- dplyr::bind_rows(df, last.point)
   row.names(df) <- c(rn, paste0(rn[length(rn)], "_1"))
   df

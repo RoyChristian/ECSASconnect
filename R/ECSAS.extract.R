@@ -24,7 +24,8 @@
 #'  \[character:\sQuote{\code{c("All","Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS")}}]\cr
 #'   From which sub.program the extraction must be made. \sQuote{\code{All}}
 #'  subprograms will include the observations made in the PIROP program.
-#'@param intransect \[logical(1):\sQuote{TRUE}]\cr If TRUE, return only
+#'@param intransect DEPRECATED - please use \code{intransect.only.}
+#'@param intransect.only \[logical(1):\sQuote{TRUE}]\cr If TRUE, return only
 #'  observations coded as "In Transect", otherwise return all observations. See
 #'  the ECSAS survey protocol for more details:
 #'
@@ -112,7 +113,8 @@ ECSAS.extract <-  function(species = NULL,
                            obs.keep = NA, 
                            obs.exclude = NA,
                            sub.program = c("All","Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS"), 
-                           intransect = TRUE, 
+                           intransect = TRUE,
+                           intransect.only = TRUE,
                            distMeth = c(14, 20),
                            ind.tables.only = FALSE,
                            ecsas.path = NULL,
@@ -121,6 +123,9 @@ ECSAS.extract <-  function(species = NULL,
                            debug = FALSE) {
 
   if(debug) browser()
+  
+  if(!missing(intransect))
+    stop("Function argument 'intransect' is deprecated - please use intransect.only instead.")
   
   # check args
   coll = checkmate::makeAssertCollection()
@@ -149,7 +154,7 @@ ECSAS.extract <-  function(species = NULL,
   checkmate::assert_character(obs.keep, min.len = 1, add = coll)
   checkmate::assert_character(obs.exclude, min.len = 1, add = coll)
   checkmate::assert_subset(sub.program, eval(formals()$sub.program), add = coll)
-  checkmate::assert_logical(intransect, len = 1, any.missing = FALSE, add = coll)
+  checkmate::assert_logical(intransect.only, len = 1, any.missing = FALSE, add = coll)
   
   checkmate::assert(
     checkmate::check_integerish(distMeth, any.missing = FALSE, min.len = 1), 

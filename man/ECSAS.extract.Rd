@@ -14,6 +14,7 @@ ECSAS.extract(
   obs.exclude = NA,
   sub.program = c("All", "Atlantic", "Quebec", "Arctic", "ESRF", "AZMP", "FSRS"),
   intransect = TRUE,
+  intransect.only = TRUE,
   distMeth = c(14, 20),
   ind.tables.only = FALSE,
   ecsas.path = NULL,
@@ -49,7 +50,9 @@ for the extraction. Name format: Surname_FirstName (eg: "Bolduc_Francois").}
 From which sub.program the extraction must be made. \sQuote{\code{All}}
 subprograms will include the observations made in the PIROP program.}
 
-\item{intransect}{[logical(1):\sQuote{TRUE}]\cr If TRUE, return only
+\item{intransect}{DEPRECATED - please use \code{intransect.only.}}
+
+\item{intransect.only}{[logical(1):\sQuote{TRUE}]\cr If TRUE, return only
 observations coded as "In Transect", otherwise return all observations. See
 the ECSAS survey protocol for more details:
 
