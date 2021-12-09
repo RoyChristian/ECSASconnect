@@ -13,7 +13,7 @@ ECSAS.extract(
   obs.keep = NA,
   obs.exclude = NA,
   sub.program = c("All", "Atlantic", "Quebec", "Arctic", "ESRF", "AZMP", "FSRS"),
-  intransect = TRUE,
+  intransect = NULL,
   intransect.only = TRUE,
   distMeth = c(14, 20),
   ind.tables.only = FALSE,
