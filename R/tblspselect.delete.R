@@ -11,7 +11,7 @@
 tblspselect.delete<- function(ecsas.drive = "C:/Users/Christian/Google Drive/ECSAS/", ecsas.file ="Master ECSAS v 3.33.mdb"){
   wd<-getwd()
   setwd(ecsas.drive)
-  channel1 <- odbcConnectAccess(ecsas.file, uid="")
+  channel1 <- odbcConnectAccess2007(ecsas.file, uid="")
   sqlDrop(channel1, "tblspselect")
   odbcCloseAll()
 }

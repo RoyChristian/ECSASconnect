@@ -2,14 +2,14 @@ Package: ECSASconnect
 Type: Package
 Title: Import and export data from the Eastern Canada Seabirds at Sea (ECSAS)
     and the Suivi des oiseaux en mer de l'est du Canada (SOMEC) databases
-Version: 0.6.8.9006
+Version: 0.6.8.9007
 Date: 2017-03-09
 Author: Christian Roy, Dave Fifield, Francois Rousseu, Matthieu Beaumont
 Maintainer: Dave Fifield <dave.fifield@canada.ca>
 Description: This package will allow the user to extract data from the ECSAS Access
-    database and to export data from the SOMEC to the ECSAS access database. The
-    package will work only with R-32 bits since the drivers for Access only exist in
-    32 bits.
+    database and to export data from the SOMEC to the ECSAS access database. As of June 2022
+    the package now works with 64-bit R as long as 64-bit Access drivers are installed
+    (see https://www.microsoft.com/en-US/download/details.aspx?id=13255)
 Depends: R (>= 2.10)
 Imports:
     checkmate,

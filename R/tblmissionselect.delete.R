@@ -11,7 +11,7 @@
 tblmissionselect.delete<- function(ecsas.drive = "C:/Users/Christian/Google Drive/ECSAS/", ecsas.file ="Oiseaux marins 2006-2014.accdb"){
   wd<-getwd()
   setwd(ecsas.drive)
-  channel1 <- odbcConnectAccess(ecsas.file, uid="")
+  channel1 <- odbcConnectAccess2007(ecsas.file, uid="")
   sqlDrop(channel1, "tblmissionselect")
   odbcCloseAll()
 }

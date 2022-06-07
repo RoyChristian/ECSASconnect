@@ -8,6 +8,9 @@ Import data from the Eastern Canada Seabirds at Sea (ECSAS) database
 
 `Sys.setenv(JAVA_HOME = "C:/Program Files (x86)/ArcGIS/Desktop10.2/java/jre")`
 
+NOTE: versions after 0.6.5 do not yet have release notes here. See commit history.
+
+
 Version 0.6.5
 =======
 * Improvements to SOMEC2ECSAS

@@ -22,11 +22,7 @@ ECSAS.get.table <- function(table = NULL, ecsas.path = NULL, debug = FALSE) {
   checkmate::reportAssertions(coll)
   
   browser(expr = debug)
-  # test for 32-bit architecture
-  if (Sys.getenv("R_ARCH") != "/i386")
-    stop("You are not running a 32-bit R session. You must run ECSAS.extract in a 32-bit R session due to limitations in the RODBC Access driver.")
-
-  channel1 <- RODBC::odbcConnectAccess(ecsas.path, uid="") 
+  channel1 <- RODBC::odbcConnectAccess2007(ecsas.path, uid="") 
   
   ret <- RODBC::sqlFetch(channel1, table) %>% ensure_data_is_returned 
   RODBC::odbcClose(channel1)

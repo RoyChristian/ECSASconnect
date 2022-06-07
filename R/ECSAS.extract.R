@@ -177,10 +177,6 @@ ECSAS.extract <-  function(species = NULL,
   checkmate::assert_logical(debug, any.missing = FALSE, len = 1, add = coll)
   checkmate::reportAssertions(coll)
   
-  # test for 32-bit architecture
-  if (Sys.getenv("R_ARCH") != "/i386")
-    stop("You are not running a 32-bit R session. You must run ECSAS.extract in a 32-bit R session due to limitations in the RODBC Access driver.")
-
   # initialize various SQL sub-clauses here. Simplifies if-then-else logic below.
   intransect.selection <- ""  
   year.selection <- ""
@@ -217,11 +213,14 @@ ECSAS.extract <-  function(species = NULL,
                                   ")")
   }
 
-  ###setwd and open connection
+  ### open connection. This should work on both 32-bit R and 64-bit R as long as
+  # user has both 32-bit and 64-bit Access drivers installed. See 
+  # https://stackoverflow.com/questions/45064057/reading-data-from-32-bit-access-db-using-64-bit-r
+  # and https://www.microsoft.com/en-US/download/details.aspx?id=13255
   if(!is.null(ecsas.path)) {
-    channel1 <- RODBC::odbcConnectAccess(ecsas.path, uid="")
+    channel1 <- RODBC::odbcConnectAccess2007(ecsas.path, uid="")
   } else {
-    channel1 <- RODBC::odbcConnectAccess(file.path(ecsas.drive, ecsas.file), uid="")
+    channel1 <- RODBC::odbcConnectAccess2007(file.path(ecsas.drive, ecsas.file), uid="")
   }
   
   # generic where-clause start and end. "1=1" is a valid expression that does nothing but is syntactically
