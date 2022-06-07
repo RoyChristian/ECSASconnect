@@ -2,12 +2,30 @@ ECSASconnect
 =======
 Import data from the Eastern Canada Seabirds at Sea (ECSAS) database
 
+Installation
+=======
+
+
+    if(!require(devtools)) install.packages("devtools")
+    devtools::install_github("RoyChristian/ECSASconnect")
+
+
+Note
+======
+Not sure what this note is about since there is no dependency on rJava in this package (DAF June 2022):
+
 **For CWS computers, Java must be installed from the allowed program first for necessary package rJava to work.**
 
 **For InGeo computers, set the path to Java in the ArcGIS folder for rJava to work. When loading ECSASconnect, it seems that it may be neccessary to reset the JAVA_HOME variable before loading the package even if rJava is working. Mysterious...**
 
 `Sys.setenv(JAVA_HOME = "C:/Program Files (x86)/ArcGIS/Desktop10.2/java/jre")`
 
+
+
+
+
+Release Notes
+=======
 NOTE: versions after 0.6.5 do not yet have release notes here. See commit history.
 
 
