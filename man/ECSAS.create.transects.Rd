@@ -8,6 +8,7 @@ ECSAS.create.transects(
   dat,
   angle.thresh = NULL,
   max.lag = 10,
+  ignore_empty_dir = FALSE,
   debug = FALSE,
   CRS = NULL,
   debug.watch = NULL
@@ -20,7 +21,15 @@ ECSAS.create.transects(
 this are considered to start new transects (currently not implemented)}
 
 \item{max.lag}{(default 10 minutes) the maximum time lag allowed between
-consecutive watches to be considered part of the same transect.}
+consecutive watches to be considered part of the same transect. Watches
+are sorted by \code{ObserverName}, \code{PlatformName}, \code{Date}, and
+\code{StartTime} and time lag is computed as
+\code{StartTime(this_watch) - EndTime(previous_watch)}.}
+
+\item{ignore_empty_dir}{logical (default FALSE) should watches with a PlatformDir
+that is either empty or "no direction" (ie. 1 - see table \code{lkpDirections}
+in database), be be allowed. If TRUE, then any such watch is assumed to be
+heading in the same direction as the previous one.}
 
 \item{debug}{logical (default FALSE), should the debugger, \code{\link[base:browser]{base::browser()}},
 be used}
@@ -42,12 +51,22 @@ by the same observer on the same vessel in the same direction on the same day.
 Rows in \code{dat} must contain at least columns named \code{ObserverName},
 \code{PlatformDir}, \code{PlatformName}, \code{Date}, \code{StartTime},
 \code{EndTime}, \code{LatStart}, \code{LongStart}, \code{LatEnd},
-\code{LongEnd} as returned by \code{\link{ECSAS.extract()}}.  \code{LatEnd} and
+\code{LongEnd} as returned by \code{\link{ECSAS.extract()}}.
+
+Watches are sorted by \code{ObserverName}, \code{PlatformName}, \code{Date},
+and \code{StartTime}, and thus any errors in these will result in erroneous
+transects.
+
+\code{LatEnd} and
 \code{LongEnd} are only necessary for the last watch in each transect to
 provide it's endpoint. If either is \code{NA}, the end point will be projected
-along a loxodrome based on the watch start location, \code{PlatformDir} (or
-\code{PlatformDirDeg} if it exists), \code{PlatformSpeed}, and \code{ObsLen}.
-If either of these is missing then an error is produced.
+along a loxodrome starting at the watch start location in the direction of \code{PlatformDir} (or
+\code{PlatformDirDeg} if it exists), based on \code{PlatformSpeed} (in knots),
+and \code{ObsLen} (in minutes).
+If \code{PlatformDirDeg} or \code{PlatformDir} is missing or "no direction"
+and \code{ignore_empty_dir} is \code{TRUE}, then the point is projected to the
+north. If either of \code{PlatformSpeed} or \code{ObsLen} is missing then
+an error is produced.
 }
 \section{Author}{
 Dave Fifield

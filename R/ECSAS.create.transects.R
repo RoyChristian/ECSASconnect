@@ -7,9 +7,16 @@
 #'@param angle.thresh (default 90 degrees) changes in direction of more than
 #'  this are considered to start new transects (currently not implemented)
 #'@param max.lag (default 10 minutes) the maximum time lag allowed between
-#'  consecutive watches to be considered part of the same transect.
+#'  consecutive watches to be considered part of the same transect. Watches
+#'  are sorted by \code{ObserverName}, \code{PlatformName}, \code{Date}, and
+#'  \code{StartTime} and time lag is computed as 
+#'  \code{StartTime(this_watch) - EndTime(previous_watch)}. 
 #'@param CRS if not null, the output coordinate system will be set CRS via
 #'  \code{sp::spTransform}
+#'@param ignore_empty_dir logical (default FALSE) should watches with a PlatformDir
+#'  that is either empty or "no direction" (ie. 1 - see table \code{lkpDirections}
+#'  in database), be be allowed. If TRUE, then any such watch is assumed to be
+#'  heading in the same direction as the previous one.
 #'@param debug logical (default FALSE), should the debugger, [base::browser()],
 #'  be used
 #'@param debug.watch watchid to stop at in for loop if debug is true
@@ -21,19 +28,30 @@
 #'Rows in \code{dat} must contain at least columns named \code{ObserverName},
 #'\code{PlatformDir}, \code{PlatformName}, \code{Date}, \code{StartTime},
 #'\code{EndTime}, \code{LatStart}, \code{LongStart}, \code{LatEnd},
-#'\code{LongEnd} as returned by \code{\link{ECSAS.extract()}}.  \code{LatEnd} and
+#'\code{LongEnd} as returned by \code{\link{ECSAS.extract()}}.
+#'
+#'Watches are sorted by \code{ObserverName}, \code{PlatformName}, \code{Date}, 
+#'and \code{StartTime}, and thus any errors in these will result in erroneous
+#'transects.
+#'
+#'\code{LatEnd} and
 #'\code{LongEnd} are only necessary for the last watch in each transect to
 #'provide it's endpoint. If either is \code{NA}, the end point will be projected
-#'along a loxodrome based on the watch start location, \code{PlatformDir} (or
-#'\code{PlatformDirDeg} if it exists), \code{PlatformSpeed}, and \code{ObsLen}.
-#'If either of these is missing then an error is produced.
+#'along a loxodrome starting at the watch start location in the direction of \code{PlatformDir} (or
+#'\code{PlatformDirDeg} if it exists), based on \code{PlatformSpeed} (in knots),
+#'and \code{ObsLen} (in minutes).
+#'If \code{PlatformDirDeg} or \code{PlatformDir} is missing or "no direction" 
+#'and \code{ignore_empty_dir} is \code{TRUE}, then the point is projected to the
+#'north. If either of \code{PlatformSpeed} or \code{ObsLen} is missing then 
+#'an error is produced.
 #'@section Author:Dave Fifield
 #'
 #'@seealso \code{\link{ECSAS.extract}}
 #'  
 #'@importFrom magrittr `%>%` `%<>%`
-ECSAS.create.transects <- function(dat, angle.thresh = NULL, max.lag = 10, debug = FALSE, CRS = NULL, 
-                                   debug.watch = NULL){
+ECSAS.create.transects <- function(dat, angle.thresh = NULL, max.lag = 10, 
+                                   ignore_empty_dir = FALSE,
+                                   debug = FALSE, CRS = NULL, debug.watch = NULL){
   
   if(debug) browser()
   
@@ -43,14 +61,15 @@ ECSAS.create.transects <- function(dat, angle.thresh = NULL, max.lag = 10, debug
   # xxxx may have to convert platform dir to numeric to implement angle.thresh comparison
   # xxxx use platformdirdeg if it exists????
   
-  if(is.empty(dat$ObserverName) || is.empty(dat$PlatformDir) || is.empty(dat$PlatformName))
+  if(is.empty(dat$ObserverName) || (is.empty(dat$PlatformDir) && !ignore_empty_dir) 
+     || is.empty(dat$PlatformName))
     stop("Something is empty")
   
   # sort and get time lag between consecutive rows
   dat %<>% dplyr::arrange(ObserverName, PlatformName, Date, StartTime) %>% 
     dplyr::mutate(timelag = lubridate::time_length(StartTime - dplyr::lag(EndTime), unit = "minutes"))
   
-  #init
+  # initialize values for current transect
   dat$Sample.Label <- NA_integer_
   Sample.Label <- 1L
   cur.obs <- dat$ObserverName[1]
@@ -64,15 +83,64 @@ ECSAS.create.transects <- function(dat, angle.thresh = NULL, max.lag = 10, debug
     
     browser(expr = debug && !is.null(debug.watch) && row$WatchID == debug.watch)
 
+    # XXXX ideas for angle threshold
     # start new transect?
     # if(cur.obs != row$Observer ||abs((as.numeric(as.character(row$Direction)) - 
     #                                   as.numeric(as.character(cur.dir)))) %% 360 > angle.thresh 
     #    || cur.ves != row$Vessel || cur.day != date(row$StartTime)){
+    
+    # If the first watch had no direction, then unless one of ObserverName, or
+    # PlatformName, date changes or timelag is exceeded (starting a new
+    # transect) then eventually we may hit a watch with a valid direction which
+    # then becomes the current direction. 
+    if(is.nd(cur.dir) && !is.nd(row$PlatformDir)) 
+      cur.dir <- row$PlatformDir
 
-    # Start new transect?    
-    if(cur.obs != row$ObserverName || cur.dir != row$PlatformDir || cur.ves != row$PlatformName ||
-       cur.day != row$Date ||
-       (!is.na(row$timelag) && row$timelag > max.lag)){
+    # Start new transect? 
+    # If anything besides cur.dir changes, or row$timelag > max.lag
+    # then start a new transect.
+    # 
+    # Also....
+    #  
+    # defns
+    # cdc - cur.dir != row$PlatformDir
+    # iet - ignore empty == tru
+    # ndp - is.nd(row$PlatformDir) == TRUE
+    # ndc - is.nd(cur.dir) == TRUE
+    # 
+    # Cases:
+    # 0. something other than direction has changed
+    # 1. dir has changed, we are not ignoring -> START NEW no matter what
+    # 2. dir has changed, we are ignoring, cur.dir is still ND or NA -> DO NOTHING 
+    #    since it doesn't matter what the change is - either it's the first real dir
+    #    or it's just a change from ND to NA or vice versa.
+    # 3. dir has changed, we are ignoring, cur.dir is a real direction, 
+    #    row$PlatformDir is ND or NA -> DO NOTHING (ie. we have seen 1 or more 
+    #    of the same direction and now it has changed to ND or NA, so we just 
+    #    ignore and keep cur.dir the same)
+    # 4. dir has changed, we are ignoring, cur.dir is a real direction, 
+    #    row$PlatformDir is a real direction -> START NEW, this is a real
+    #    change from one real direction to another
+    #    
+    # so we need to start a new transect in cases 1 and 4
+    # 
+    # if((cdc && !iet) || # case 1
+    #    (cdc && iet && (!ndc && !ndp))  # case 4
+    #    
+    #    
+    #    
+    cdc <- cur.dir != row$PlatformDir
+    iet <- ignore_empty_dir == TRUE
+    ndp <- is.nd(row$PlatformDir) == TRUE
+    ndc <- is.nd(cur.dir) == TRUE
+
+    if( (cur.obs != row$ObserverName || 
+          cur.ves != row$PlatformName ||
+          cur.day != row$Date ||
+          (!is.na(row$timelag) && row$timelag > max.lag)) || # End case 0
+          (cdc && !iet) ||                # case 1
+          (cdc && iet && (!ndc && !ndp))  # case 4
+         ) {
       Sample.Label <- Sample.Label + 1L
       cur.obs <- row$ObserverName
       cur.dir <- row$PlatformDir
@@ -89,7 +157,7 @@ ECSAS.create.transects <- function(dat, angle.thresh = NULL, max.lag = 10, debug
   
   # add a final point at end of each transect
   dat <- split(dat, dat$Sample.Label) %>% 
-    purrr::map_df(add.final.point) %>% 
+    purrr::map_df(add.final.point, ignore_empty_dir = ignore_empty_dir) %>% 
     dplyr::mutate(save.lat = LatStart,
            save.long = LongStart) # protect from removal by coordinates(), not needed if add.final.point is updated to use SpatialPointsDataFrame to create instead of coordinates()???
 
@@ -117,7 +185,7 @@ ECSAS.create.transects <- function(dat, angle.thresh = NULL, max.lag = 10, debug
               Watches = list(unique(WatchID)),
               LatStart = dplyr::first(save.lat),
               LongStart = dplyr::first(save.long),
-              LatEnd = dplyr::last(save.lat), # "Start" location of last point in line is actually the end of the transect
+              LatEnd = dplyr::last(save.lat), # Start location of the newly added last point in line is the end of the transect
               LongEnd = dplyr::last(save.long)
     ) %>% 
     as.data.frame()
@@ -147,17 +215,17 @@ ECSAS.create.transects <- function(dat, angle.thresh = NULL, max.lag = 10, debug
 ECSAS.add.sample.label <- function(wtchs, trns) {
   
   # make sure all transects have at least one watch
-  stopifnot(all(map_int(transects.sp@data$Watches, length) > 0))
+  stopifnot(all(purrr::map_int(transects.sp@data$Watches, length) > 0))
   
   # Remove existing Sample.Label column
-  if ("Sample.Label" %in% names(wtchs)) wtchs %<>% select(-Sample.Label)
+  if ("Sample.Label" %in% names(wtchs)) wtchs %<>% dplyr::select(-Sample.Label)
   
   # unnest list column into individual row for each unique value in Watches,
   # select sample.Label and Watches columns, 
   # rename Watches to WatchID and
   # join to wtchs
-  unnest(trns, Watches) %>% 
-    select(Sample.Label, Watches) %>% 
-    rename(WatchID = Watches) %>% 
-    right_join(wtchs, by = "WatchID")
+  tidyr::unnest(trns, Watches) %>% 
+    dplyr::select(Sample.Label, Watches) %>% 
+    dplyr::rename(WatchID = Watches) %>% 
+    dplyr::right_join(wtchs, by = "WatchID")
 }

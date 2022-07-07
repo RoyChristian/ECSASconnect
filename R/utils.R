@@ -3,7 +3,7 @@ is.empty <- function(x){
 }
 
 # Add a final point at the end of a transect
-add.final.point <- function(df, debug = FALSE){
+add.final.point <- function(df, ignore_empty_dir = FALSE, debug = FALSE){
   if(debug) browser()
   
   # can't remember what this is for, but judging by the code below, perhaps
@@ -11,7 +11,7 @@ add.final.point <- function(df, debug = FALSE){
   rn <- row.names(df)
   last.point <- df[nrow(df),]
   if(is.na(last.point$LatEnd) || is.na(last.point$LongEnd))
-    last.point %<>% project.endpoint()
+    last.point %<>% project.endpoint(ignore_empty_dir = ignore_empty_dir)
 
   # "Start" location of endpoint is the end loc of last watch
   last.point %<>%
@@ -23,17 +23,22 @@ add.final.point <- function(df, debug = FALSE){
   df
 }
 
-# projet endpoint for a specific watch and recalc WatchLenKm
-project.endpoint <- function(row, debug = FALSE) {
+# projet endpoint for a specific watch and recalc WatchLenKm.
+# If ignore_empty_dir is TRUE, and row$PlatformDir is 1, "ND" or NA, then
+# the point will be projected to the north.
+project.endpoint <- function(row, ignore_empty_dir = FALSE, debug = FALSE) {
   if(debug) browser()
   
   if(is.empty(row$LongStart) || is.empty(row$LatStart) || is.empty(row$CalcDurMin) ||
      is.empty(row$PlatformSpeed))
-    stop("Error: project.endpoint: one of LongStart, LatStart, CalcDurMin, or PlatformSpeed is empty.")
+    stop(paste0("Error: project.endpoint: CruiseID = ", row$CruiseID, ", WatchID = ",
+                row$WatchID, ", one of LongStart, LatStart, CalcDurMin, or ", 
+                "PlatformSpeed is empty."))
   
   p <- with(row, geosphere::destPoint(cbind(LongStart, LatStart), 
-                                      b = as.numeric(as.character(get.platform.direction(row))), 
-                                      d = ((CalcDurMin/60) * PlatformSpeed * 1.852) * 1000))
+          b = as.numeric(as.character(get.platform.direction(row, 
+                                                             ignore_empty_dir))), 
+          d = ((CalcDurMin/60) * PlatformSpeed * 1.852) * 1000))
   row %>% 
     dplyr::mutate(LongEnd = p[,1],
            LatEnd = p[,2],
@@ -61,22 +66,50 @@ assert_string_len <- assertStringLen <- checkmate::makeAssertionFunction(checkSt
 test_string_len <- testStringLen <- checkmate::makeTestFunction(checkStringLen)
 expect_string_len <- expectStringLen <- checkmate::makeExpectationFunction(checkStringLen)
 
-# return a numeric direction for a watch
-get.platform.direction <- function(watch, direction.as.tex = TRUE){
+# return a numeric direction for a watch.
+# If ignore_empty_dir is TRUE, and dir is 1 (or "ND", or NA), just return
+# 0 (ie. north)
+get.platform.direction <- function(watch, ignore_empty_dir = FALSE){
   
   nrow(watch) == 1 || stop(sprintf("get.platform.direction: watch can only have one row not %d.", nrow(watch)))
+
+  # Just default to returning north if direcetion is NA and were ignoring
+  # empty directions.
+  if (ignore_empty_dir && is.na(watch$PlatformDir))  
+    return(0)
   
-  if(!is.na(watch$PlatformDirDeg))
+  if("PlatformDirDeg" %in% colnames(watch) && !is.na(watch$PlatformDirDeg))
     res <- watch$PlatformDirDeg
   else {
     if (is.integer(watch$PlatformDir))
-      res <- switch(EXPR = as.character(watch$PlatformDir), "2" = 0, "3" = 45, "4" = 90, "5" = 135, "6" = 180, "7" = 225, "8" = 270, "9" = 315, 
-                    "get.platform.direction: Error")
+      if (isTRUE(ignore_empty_dir))
+        res <- switch(EXPR = as.character(watch$PlatformDir), "1" = 0, "2" = 0, "3" = 45, 
+                    "4" = 90, "5" = 135, "6" = 180, "7" = 225, "8" = 270, 
+                    "9" = 315, "get.platform.direction: Error")
+      else  
+        res <- switch(EXPR = as.character(watch$PlatformDir), "2" = 0, "3" = 45, 
+                    "4" = 90, "5" = 135, "6" = 180, "7" = 225, "8" = 270, 
+                    "9" = 315, "get.platform.direction: Error")
     else
-      res <- switch(EXPR = watch$PlatformDir, N = 0, NE = 45, E = 90, SE = 135, S = 180, SW = 225, W = 270, NW = 315, "get.platform.direction: Error")
+      if (isTRUE(ignore_empty_dir))
+        res <- switch(EXPR = watch$PlatformDir, ND = 0, N = 0, NE = 45, E = 90, SE = 135, 
+                      S = 180, SW = 225, W = 270, NW = 315,
+                      "get.platform.direction: Error")
+      else
+        res <- switch(EXPR = watch$PlatformDir, N = 0, NE = 45, E = 90, SE = 135, 
+              S = 180, SW = 225, W = 270, NW = 315,
+              "get.platform.direction: Error")
   }
   
-  if (is.null(res))
-    stop(paste0("get.platform.direction: Error: result is NULL for PlatformDir == ", watch$PlatformDir))
+  if (is.null(res) || res == "get.platform.direction: Error" )
+    stop(paste0("get.platform.direction: Error: illegal PlatformDir: ",
+      watch$PlatformDir))
   res
+}
+
+# Check if a direction is empty of set to "No particular direction"
+# which is 1 (see lkpDirections). This should really lookup the "ND" 
+# code in lkpDirections and make sure it is 1.
+is.nd <- function(x) {
+  is.na(x) || is.null(x) || is.nan(x) || x == 1
 }
