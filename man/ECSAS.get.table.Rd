@@ -12,7 +12,8 @@ ECSAS.get.table(table = NULL, ecsas.path = NULL, debug = FALSE)
 \item{ecsas.path}{(default NULL) full path name to the ECSAS database.}
 }
 \description{
-This function will connect to the Access database and return a table as a data frame.
+This function will connect to the Access database and return a
+table as a data frame.
 }
 \section{Author}{
 Dave Fifield

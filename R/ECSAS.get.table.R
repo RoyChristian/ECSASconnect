@@ -2,7 +2,8 @@
 #'@title Get ECSAS table from database
 #'
 #'
-#'@description This function will connect to the Access database and return a table as a data frame.
+#'@description This function will connect to the Access database and return a 
+#'table as a data frame.
 #'
 #'@param table character vector (of length 1) naming table to be returned.
 #'@param ecsas.path (default NULL) full path name to the ECSAS database. 
