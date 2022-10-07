@@ -1,7 +1,6 @@
 #' @export
 #'@title Get ECSAS table from database
 #'
-#'
 #'@description This function will connect to the Access database and return a 
 #'table as a data frame.
 #'

@@ -1,31 +1,30 @@
 #'@export
 #'@title Extract data from ECSAS database
 #'
-#'
 #'@description This function will connect to the Access database, create a
 #'  series of queries and import the desired information in a data frame.
 #'
-#'@param species \[character:\sQuote{NULL}]\cr Optional. Alpha code (or vector
+#'@param species \[character, default: \sQuote{NULL}]\cr Optional. Alpha code (or vector
 #'  of Alpha codes, e.g., c("COMU,"TBMU", "UNMU")) for the species desired in
 #'  the extraction.
-#'@param years \[integer:\sQuote{NULL}]\cr Optional. Either a single year or a
+#'@param years \[integer, default: \sQuote{NULL}]\cr Optional. Either a single year or a
 #'  vector of two years denoting "from" and "to" (inclusive).
-#'@param cruise.ids \[integer:\sQuote{NULL}]\cr Optional. Integer vector of cruise ID's to extract.
-#'@param lat \[numeric(2):\sQuote{\code{c(-90, 90)}}] \cr Vector of two numbers
+#'@param cruise.ids \[integer, default: \sQuote{NULL}]\cr Optional. Integer vector of cruise ID's to extract.
+#'@param lat \[numeric(2), default: \sQuote{\code{c(-90, 90)}}] \cr Vector of two numbers
 #'  giving the southern and northern limits of the range desired.
-#'@param long \[numeric(2):\sQuote{\code{c(-180, 180)}}] \cr Vector of two
+#'@param long \[numeric(2), default: \sQuote{\code{c(-180, 180)}}] \cr Vector of two
 #'  numbers giving the western and eastern limits of the range desired. Note
 #'  that west longitude values must be negative.
-#'@param obs.keep \[character:\sQuote{NA}]\cr Names of the observers to keep for
+#'@param obs.keep \[character, default: \sQuote{NA}]\cr Names of the observers to keep for
 #'  the extraction. Name format: Surname_FirstName (eg: "Bolduc_Francois").
-#'@param obs.exclude \[character:\sQuote{NA}]\cr Name of the observer to exclude
+#'@param obs.exclude \[character, default: \sQuote{NA}]\cr Name of the observer to exclude
 #'  for the extraction. Name format: Surname_FirstName (eg: "Bolduc_Francois").
 #'@param sub.program
-#'  \[character:\sQuote{\code{c("All","Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS")}}]\cr
+#'  \[character, default: \sQuote{\code{c("All","Atlantic","Quebec","Arctic","ESRF","AZMP","FSRS")}}]\cr
 #'   From which sub.program the extraction must be made. \sQuote{\code{All}}
 #'  subprograms will include the observations made in the PIROP program.
 #'@param intransect DEPRECATED - please use \code{intransect.only.}
-#'@param intransect.only \[logical(1):\sQuote{TRUE}]\cr If TRUE, return only
+#'@param intransect.only \[logical(1), default: \sQuote{TRUE}]\cr If TRUE, return only
 #'  observations coded as "In Transect", otherwise return all observations. See
 #'  the ECSAS survey protocol for more details:
 #'
@@ -33,7 +32,7 @@
 #'  at Sea (ECSAS) standardized protocol for pelagic seabird surveys from moving
 #'  and stationary platforms. Canadian Wildlife Service Technical Report Series
 #'  No. 515. Atlantic Region. vi + 37 pp.
-#'@param distMeth \[integer or character:\sQuote{\code{c(14,20)}}]\cr Integer(s)
+#'@param distMeth \[integer or character, default: \sQuote{\code{c(14,20)}}]\cr Integer(s)
 #'  specifying the distance sampling method code(s) (see tblWatch.DistMeth in
 #'  ECSAS). Acceptable values are a single integer, a vector of integers, or
 #'  \sQuote{\code{All}}. The default will includes all watches with
@@ -41,22 +40,27 @@
 #'  \sQuote{\code{All}}, then observations from all distance sampling methods
 #'  will be returned, which may include observations from the PIROP program if
 #'  no other options preclude this.
-#'@param ind.tables.only \[logical(1):\sQuote{FALSE}]\cr Indicates if two
+#'@param ind.tables.only \[logical(1), default: \sQuote{FALSE}]\cr Indicates if two
 #'  individual tables for watch/cruise, and observations should be returned
 #'  rather than a single table with all columns combined. See Value section.
-#'@param ecsas.path \[character:\sQuote{NULL}]\cr Full path name to the ECSAS
+#'@param ecsas.path \[character, default: \sQuote{NULL}]\cr Full path name to the ECSAS
 #'  database. If NULL, the path is built from \code{ecsas.drive} and
 #'  \code{ecsas.file}.
 #'@param ecsas.drive
-#'  \[character:\sQuote{\code{"C:/Users/christian/Dropbox/ECSAS"}}]\cr Path to
+#'  \[character, default: \sQuote{\code{"C:/Users/christian/Dropbox/ECSAS"}}]\cr Path to
 #'  folder containing the ECSAS Access database. The default value is likely no
 #'  longer useful and should be deprecated.
-#'@param ecsas.file  \[character:\sQuote{\code{"Master ECSAS_backend v
+#'@param ecsas.file  \[character, default: \sQuote{\code{"Master ECSAS_backend v
 #'  3.31.mdb"}}]\cr Name of the ECSAS Access database file. The default value is
 #'  likely no longer useful and should be deprecated.
 #'
 #'
 #'@details
+#' Using the default values of \code{intransect.only = TRUE} and 
+#' \code{distMeth = c(14,20)} has the side-effect of excluding data collected
+#' under the old PIROP protocl. To include these data, set \code{intransect.only
+#' = FALSE} and \code{distMeth = "All"}.
+#'
 #'
 #'The distance traveled during the watch is returned in the column
 #'\code{WatchLenKm}. If lat/long coordinates are available for both the start
@@ -223,8 +227,9 @@ ECSAS.extract <-  function(species = NULL,
     channel1 <- RODBC::odbcConnectAccess2007(file.path(ecsas.drive, ecsas.file), uid="")
   }
   
-  # generic where-clause start and end. "1=1" is a valid expression that does nothing but is syntactically
-  # correct in case there are no other where conditions.
+  # generic where-clause start and end. "1=1" is a valid expression that does
+  # nothing but is syntactically correct in case there are no other where
+  # conditions.
   where.start <-  "WHERE ((1=1)"
   where.end <- ")"
 
@@ -273,7 +278,8 @@ ECSAS.extract <-  function(species = NULL,
       stop("Years must be either a single number or a vector of two numbers.")
   }
 
-  # SQL query to import the species table. Just go ahead and import whole thing since it's short (~600 rows)
+  # SQL query to import the species table. Just go ahead and import whole thing
+  # since it's short (~600 rows)
   query.species <- paste(
     paste(
       "SELECT tblSpeciesInfo.Alpha",
@@ -308,7 +314,8 @@ ECSAS.extract <-  function(species = NULL,
       }
     }
 
-    # Form the WHERE clause that is based on the species number instead of the alpha code
+    # Form the WHERE clause that is based on the species number instead of the
+    # alpha code
     nspecies <- paste0(sapply(1:length(species), function(i) {
       paste("(tblSighting.SpecInfoID)=", speciesInfo[speciesInfo$Alpha == species[i], ]$SpecInfoID, sep = "")
       }), collapse = " Or ")
