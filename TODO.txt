@@ -1,3 +1,5 @@
+
+- use lubridate::force_tz the force all time zones to UTC
 - Dec 2020 - add option to ECSAS.create.transects() to continue the transect as long as it doesn't deviate
   by more than xx degrees. Requires start and end positions.
 - add (at least) the lat/long to the SQL to cut down on amount of data return. and/or do joins in SQL to speed up
