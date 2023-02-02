@@ -75,7 +75,7 @@ create.aerial.watch.by.transect <- function(dat, watchlen, posns, pr){
   transStart <- unique(dat$StartDateTime)
   stopifnot(length(transStart) == 1)
 
-  # Create and insert off-effort records for this transect, if any
+  # Create expanded pause/resume records for this transect, if any
   pr.exp <- pr %>% 
     dplyr::select(TransectID, PauseDateTime, ResumeDateTime) %>% 
     dplyr::filter(TransectID == transID) %>% 
@@ -87,38 +87,36 @@ create.aerial.watch.by.transect <- function(dat, watchlen, posns, pr){
     dplyr::select(AerialTransectID) %>% 
     dplyr::mutate(DateTime = transStart, 
                   type = "START")
-
   endrow <- dat[1,] %>% 
     dplyr::select(AerialTransectID) %>% 
     dplyr::mutate(DateTime = transEnd, 
                   type = "END")
-  
-  dat <- rbind(startrow, pr.exp, endrow) %>% 
+  bounds <- rbind(startrow, pr.exp, endrow) %>% 
     dplyr::arrange(DateTime) # just in case
 
   # Create breaks to cut dat up into chunks between pause/resumes including
   # first and last row indices
-  breaks <- which(dat$type == "PAUSE") %>% 
-    c(1, nrow(dat)) %>% 
+  breaks <- which(bounds$type == "PAUSE") %>% 
+    c(1, nrow(bounds)) %>% 
     unique()
-  
+
+  stopifnot(length(breaks) > 1)
+    
   # Add a factor to identify each chunk of data
-  # Don't try to cut an data frame with just one row
-  if (length(breaks) > 1) 
-    dat <- dat %>% 
-      dplyr::mutate(chunk = cut(1:nrow(.), breaks = breaks, include.lowest = TRUE))
+  bounds <- bounds %>% 
+    dplyr::mutate(chunk = cut(1:nrow(.), breaks = breaks, include.lowest = TRUE))
+
+  # Create watches for each transect chunk
+  watches <- bounds %>% 
+    split(.$chunk) %>% 
+    purrr::map_dfr(create.chunk.watches, watchlen, transID)
   
-  # cases:
+  # Connext watches to dat - need to deal with empty transects separately?
   
-  dat  
-  # Now process each chunk and create watches for each one 
-  # Deal with empty transect etc
 }  
 
 # create nrow(pr) "pause/resume" rows using template as a format
 expand.pr <- function(pr) {
-  # Nuke all columns of template except surveyID, & transectID before assigning
-  # pause/resume start/end.
   template <- dplyr::tribble(~AerialTransectID, unique(pr$TransectID))
   
   pauses <- template[rep(1, nrow(pr)), ] %>% # 1 row per pr row
@@ -133,6 +131,22 @@ expand.pr <- function(pr) {
 }
 
 
-# OLD: For each row we need to add a watchid identifying the watch, a start 
-# time and in time for the watch, and the start position and end position for
-#  the watch
+create.chunk.watches <- function(chunk, watchlen, transID){
+  stopifnot(nrow(chunk) == 2)
+  
+  n.need <- ceiling(lubridate::interval(chunk$DateTime[1], chunk$DateTime[2])/
+                    lubridate::seconds(watchlen))
+  template <- dplyr::tribble(~AerialTransectID, unique(chunk$AerialTransectID))
+  
+  # set watchID, start and end times for each watch  
+  watches <- template[rep(1, n.need),] %>% 
+    dplyr::mutate(WatchID = paste(transID, chunk$chunk[1], 1:n.need, sep = "_"),
+                  StartTime = chunk$DateTime[1] + 
+                    0:(nrow(.)-1) * lubridate::seconds(watchlen),
+                  EndTime = StartTime + lubridate::seconds(watchlen)
+    )
+  
+  # set final watch end time
+  watches[nrow(watches), "EndTime"] <- chunk[2, "DateTime"]
+  watches
+}
