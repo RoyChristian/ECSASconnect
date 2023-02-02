@@ -36,6 +36,8 @@ ECSAS.create.aerial.watches <- function(dat, watchlen = 30, posns, ecsas.path) {
     # dplyr::filter(AerialTransectID %in% pr$TransectID) %>%
     split(.$AerialTransectID) %>% 
     purrr::map_dfr(create.aerial.watch.by.transect, watchlen, posns, pr)
+  
+  
   x
 }
 
@@ -73,43 +75,61 @@ create.aerial.watch.by.transect <- function(dat, watchlen, posns, pr){
   transStart <- unique(dat$StartDateTime)
   stopifnot(length(transStart) == 1)
 
-  # XXX Should check to ensure that there are no observations during off-effort.
-  # Currently the code assumes this doesn't happen
-  
   # Create and insert off-effort records for this transect, if any
-  dat <- pr %>% 
+  pr.exp <- pr %>% 
+    dplyr::select(TransectID, PauseDateTime, ResumeDateTime) %>% 
     dplyr::filter(TransectID == transID) %>% 
-    create.pr.obs(dat[1,]) %>% 
-    rbind(dat) %>% 
-    dplyr::arrange(ObsTime)
+    expand.pr() %>% 
+    dplyr::arrange(DateTime)
 
-  # create a factor to identify each chunk of on-effort data
-  # XXX Check corner cases - off-effort at start, or end, no off-effort data
-  breaks <- which(dat$Alpha == "PAUSE")
-  if (!(1 %in% breaks)) breaks <- c(1, breaks)
-  if (!(nrow(dat) %in% breaks)) breaks <- c(breaks, nrow(dat))
+  # add an additional start/end row
+  startrow <- dat[1,] %>% 
+    dplyr::select(AerialTransectID) %>% 
+    dplyr::mutate(DateTime = transStart, 
+                  type = "START")
+
+  endrow <- dat[1,] %>% 
+    dplyr::select(AerialTransectID) %>% 
+    dplyr::mutate(DateTime = transEnd, 
+                  type = "END")
+  
+  dat <- rbind(startrow, pr.exp, endrow) %>% 
+    dplyr::arrange(DateTime) # just in case
+
+  # Create breaks to cut dat up into chunks between pause/resumes including
+  # first and last row indices
+  breaks <- which(dat$type == "PAUSE") %>% 
+    c(1, nrow(dat)) %>% 
+    unique()
+  
+  # Add a factor to identify each chunk of data
   # Don't try to cut an data frame with just one row
   if (length(breaks) > 1) 
     dat <- dat %>% 
       dplyr::mutate(chunk = cut(1:nrow(.), breaks = breaks, include.lowest = TRUE))
   
-
+  # cases:
+  
   dat  
   # Now process each chunk and create watches for each one 
   # Deal with empty transect etc
 }  
 
 # create nrow(pr) "pause/resume" rows using template as a format
-create.pr.obs <- function(pr, template) {
-  # Need to nuke all columns of template except surveyID, & transectID before
-  # assigning pause/resume start/end.
-  template %>% 
-    dplyr::mutate(dplyr::across(!any_of(c("AerialTransectID", "AerialSurveyID")), ~ NA)) %>% 
-    magrittr::extract(rep(1, nrow(pr)), ) %>% 
-    dplyr::mutate(StartDateTime = pr$PauseDateTime, 
-                  ObsTime = pr$PauseDateTime, # Needed since obs will be sorted by this column
-           EndDateTime = pr$ResumeDateTime,
-           Alpha = "PAUSE/RESUME")
+expand.pr <- function(pr) {
+  # Nuke all columns of template except surveyID, & transectID before assigning
+  # pause/resume start/end.
+  template <- dplyr::tribble(~AerialTransectID, unique(pr$TransectID))
+  
+  pauses <- template[rep(1, nrow(pr)), ] %>% # 1 row per pr row
+    dplyr::mutate(DateTime = pr$PauseDateTime, 
+                  type = "PAUSE")
+
+  resumes <- template[rep(1, nrow(pr)), ] %>% # 1 row per pr row
+    dplyr::mutate(DateTime = pr$ResumeDateTime, 
+                  type = "RESUME")
+  
+  rbind(pauses, resumes)
 }
 
 
