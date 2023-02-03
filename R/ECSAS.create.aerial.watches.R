@@ -1,4 +1,4 @@
-#' @export
+#'@export
 #'@title Convert a series of continuous observations into segments
 #'
 #'@description This function takes a data frame of continuous observations and
@@ -21,24 +21,45 @@
 #'@details This is mostly used to convert aerial survey transects into segments
 #'  for Density Surface Modeling and other analyses.
 #'  
-#'@return 
+#'@return a dataframe of watches
 #'@section Author:Dave Fifield
-
-ECSAS.create.aerial.watches <- function(dat, watchlen = 30, posns, ecsas.path) {
+ECSAS.create.aerial.watches <- function(dat, 
+                                        watchlen = 30, 
+                                        posns = NULL, 
+                                        ecsas.path, 
+                                        interp.miss.posn = FALSE,
+                                        ...) {
 
   # Get pause resume information
   pr <- ECSAS.get.table(ecsas.path = ecsas.path, "tblAerialPauseResume") %>% 
     dplyr::mutate(PauseDateTime = lubridate::force_tz(PauseDateTime, "UTC"),
            ResumeDateTime = lubridate::force_tz(ResumeDateTime, "UTC"))
   
-  x <- dat %>%
-    # XXXXXX REMEMBER TO REMOVE NEXT LINE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # dplyr::filter(AerialTransectID %in% pr$TransectID) %>%
-    split(.$AerialTransectID) %>% 
-    purrr::map_dfr(create.aerial.watch.by.transect, watchlen, posns, pr)
+  # Create watches
+  watches <- dat %>%
+    split(.$AerialTransectID) %>%
+    purrr::map_dfr(create.aerial.watch.by.transect, watchlen, posns, pr, ...)
+
+  # save(watches, file = "C:/Users/fifieldd/OneDrive - EC-EC/Projects/Atlantic dsm/R/Rdata/aerial_watches.Rda")
+  # 
+  # load("C:/Users/fifieldd/OneDrive - EC-EC/Projects/Atlantic dsm/R/Rdata/aerial_watches.Rda")  
   
+  # Assign positions
+  if (!is.null(posns)) {
+    watches <- watches %>% 
+      dplyr::left_join(posns, by = c("StartTime" = "datetime"))
+  } else {
+    watches <- watches %>% 
+      mutate(lat = NA, 
+             long = NA,
+             alt = NA)
+  }
   
-  x
+  # Interpolate missing posns 
+  if (interp.miss.posn && (any(is.na(watches$lat)) || any(is.na(watches$lat))) ) {
+    # go through all transects that have watches missing positions
+    prob.transects <- 
+  }
 }
 
 
@@ -63,12 +84,18 @@ ECSAS.create.aerial.watches <- function(dat, watchlen = 30, posns, ecsas.path) {
 # records whose start/end times include the observation. Need to think about 
 # which watch an observation on the boundary belongs to. See new dplyr tweet 
 # about  join_by helpers used with dates.
-create.aerial.watch.by.transect <- function(dat, watchlen, posns, pr){
+create.aerial.watch.by.transect <- function(dat, 
+                                            watchlen, 
+                                            posns, 
+                                            pr, 
+                                            verbose = FALSE){
   
   transID <- unique(dat$AerialTransectID)
   stopifnot(length(transID) == 1)
  
-  message("Doing transectID = ", transID) 
+  if (verbose)
+    message("Doing transectID = ", transID) 
+  
   transEnd <- unique(dat$EndDateTime)
   stopifnot(length(transEnd) == 1)
   
@@ -101,7 +128,7 @@ create.aerial.watch.by.transect <- function(dat, watchlen, posns, pr){
     unique()
 
   stopifnot(length(breaks) > 1)
-    
+
   # Add a factor to identify each chunk of data
   bounds <- bounds %>% 
     dplyr::mutate(chunk = cut(1:nrow(.), breaks = breaks, include.lowest = TRUE))
@@ -112,7 +139,7 @@ create.aerial.watch.by.transect <- function(dat, watchlen, posns, pr){
     purrr::map_dfr(create.chunk.watches, watchlen, transID)
   
   # Connext watches to dat - need to deal with empty transects separately?
-  
+  watches
 }  
 
 # create nrow(pr) "pause/resume" rows using template as a format
