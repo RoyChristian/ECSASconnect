@@ -27,7 +27,6 @@ ECSAS.create.aerial.watches <- function(dat,
                                         watchlen = 30, 
                                         posns = NULL, 
                                         ecsas.path, 
-                                        interp.miss.posn = FALSE,
                                         ...) {
 
   # Get pause resume information
@@ -40,26 +39,21 @@ ECSAS.create.aerial.watches <- function(dat,
     split(.$AerialTransectID) %>%
     purrr::map_dfr(create.aerial.watch.by.transect, watchlen, posns, pr, ...)
 
-  # save(watches, file = "C:/Users/fifieldd/OneDrive - EC-EC/Projects/Atlantic dsm/R/Rdata/aerial_watches.Rda")
-  # 
-  # load("C:/Users/fifieldd/OneDrive - EC-EC/Projects/Atlantic dsm/R/Rdata/aerial_watches.Rda")  
-  
-  # Assign positions
-  if (!is.null(posns)) {
+  # Assign positions to start and end of watch
+  if (!is.null(posns))
     watches <- watches %>% 
-      dplyr::left_join(posns, by = c("StartTime" = "datetime"))
-  } else {
-    watches <- watches %>% 
-      mutate(lat = NA, 
-             long = NA,
-             alt = NA)
-  }
-  
-  # Interpolate missing posns 
-  if (interp.miss.posn && (any(is.na(watches$lat)) || any(is.na(watches$lat))) ) {
-    # go through all transects that have watches missing positions
-    prob.transects <- 
-  }
+      dplyr::left_join(posns, by = c("WatchStartTime" = "datetime")) %>% 
+      dplyr::rename(LatStart = lat, LongStart = long, Altitude = alt) %>% 
+      dplyr::left_join(posns, by = c("WatchEndTime" = "datetime")) %>% 
+      dplyr::rename(LatEnd = lat, LongEnd = long) %>% 
+      dplyr::select(-alt)
+
+  # Calc WatchLenKM
+  watches <- watches %>% 
+    dplyr::mutate(WatchLenKM = geosphere::distGeo(cbind(LongStart, LatStart), 
+                                           cbind(LongEnd,  LatEnd))/1000,
+           CalcDurMin = watchlen/60)
+  watches
 }
 
 
@@ -86,7 +80,7 @@ ECSAS.create.aerial.watches <- function(dat,
 # about  join_by helpers used with dates.
 create.aerial.watch.by.transect <- function(dat, 
                                             watchlen, 
-                                            posns, 
+                                            posns = NULL, 
                                             pr, 
                                             verbose = FALSE){
   
@@ -138,7 +132,6 @@ create.aerial.watch.by.transect <- function(dat,
     split(.$chunk) %>% 
     purrr::map_dfr(create.chunk.watches, watchlen, transID)
   
-  # Connext watches to dat - need to deal with empty transects separately?
   watches
 }  
 
@@ -168,12 +161,12 @@ create.chunk.watches <- function(chunk, watchlen, transID){
   # set watchID, start and end times for each watch  
   watches <- template[rep(1, n.need),] %>% 
     dplyr::mutate(WatchID = paste(transID, chunk$chunk[1], 1:n.need, sep = "_"),
-                  StartTime = chunk$DateTime[1] + 
+                  WatchStartTime = chunk$DateTime[1] + 
                     0:(nrow(.)-1) * lubridate::seconds(watchlen),
-                  EndTime = StartTime + lubridate::seconds(watchlen)
+                  WatchEndTime = WatchStartTime + lubridate::seconds(watchlen)
     )
   
   # set final watch end time
-  watches[nrow(watches), "EndTime"] <- chunk[2, "DateTime"]
+  watches[nrow(watches), "WatchEndTime"] <- chunk[2, "DateTime"]
   watches
 }
