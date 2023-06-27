@@ -1,33 +1,48 @@
 #'@export
-#'@title Convert a series of continuous observations into segments
+#'@title Create watches from aerial transects
 #'
-#'@description This function takes a data frame of continuous observations and
-#'  converts them into the segments Each row of the \code{dat} data frame
-#'  contains either an observation, a PAUSE, or a RESUME record, Each
-#'  transect is cut into segments (of \code{seglen} seconds each) beginning
-#'  from the time of the transect start record. Thus the final watch in each
-#'  transect may not be a full \code{seglen} seconds long.
-#'
-#'@param dat Input data frame of continuous observations. Can contain data for 
-#'  multiple surveys. Must contain a transect column whose name is provided
-#'  in \code{transcol}
-#'@param watchlen The length in seconds of each segment to be created (default 30
-#'  seconds).
-#'@param posns The GPS track positions with one row per second.
-#'
-#'@param ecsas.path \[character, default: \sQuote{NULL}]\cr Full path name to 
-#' the ECSAS database. Needed to extract the pause/resume info for aerial data.
-#'
-#'@details This is mostly used to convert aerial survey transects into segments
-#'  for Density Surface Modeling and other analyses.
+#'@description This function converts aerial transect data into watches
+#'  (ie segments). 
 #'  
-#'@return a dataframe of watches
+#'
+#'@param dat Input data frame of transect info. Can contain data for 
+#'  multiple surveys. Must contain at least columns for transect ID 
+#'  (\code{AerialTransectID}), and transect start/end date and time 
+#'  (\code{StartDateTime}, \code{EndDateTime}). All other columns are ignored.
+#'  These columns need not be unique between rows (eg. if \code{dat} contains the
+#'  actual animal observations). Watches will only be created for
+#'  each unique transect.
+#'
+#'@param watchlen The length in seconds of each watch to be created (default 30
+#'  seconds).
+#'  
+#'@param posns The GPS track positions with one row per second. \code{posns} must
+#' contain columns \code{datetime, lat, long}, and \code{alt}, the latter of which
+#' may contain \code{NA}.
+#'
+#'@param ecsas.path Full path name to the ECSAS database. Needed to extract the 
+#'    pause/resume info for aerial data. Default \code{NULL}.
+#' 
+#'@param verbose If \code{TRUE}, the \code{AerialTransectID} of each transect
+#'  is printed as it is processed. Default \code{FALSE}.
+#'  
+#'@details This is mostly used to convert aerial survey transects into segments
+#'  for Density Surface Modeling and other analyses. Periods of off-effort during
+#'  transects (e.g., while passing over islands) will be ignored. Off-effort info
+#'  is extracted directly from the database. Start and end positions of each
+#'  watch are assigned from \code{posns}, if supplied, based on matching time.  
+#'  A warning is issued if any start/end positions cannot be assigned.
+#'  
+#'  The final watch in each transect (or before an off-effort break) may not be
+#'  a full \code{watchlen} seconds long.
+#'  
+#'@return A dataframe of watches.
 #'@section Author:Dave Fifield
 ECSAS.create.aerial.watches <- function(dat, 
                                         watchlen = 30, 
                                         posns = NULL, 
                                         ecsas.path, 
-                                        ...) {
+                                        verbose = FALSE) {
 
   # Get pause resume information
   pr <- ECSAS.get.table(ecsas.path = ecsas.path, "tblAerialPauseResume") %>% 
@@ -37,7 +52,7 @@ ECSAS.create.aerial.watches <- function(dat,
   # Create watches
   watches <- dat %>%
     split(.$AerialTransectID) %>%
-    purrr::map_dfr(create.aerial.watch.by.transect, watchlen, posns, pr, ...)
+    purrr::map_dfr(create.aerial.watch.by.transect, watchlen, posns, pr, verbose)
 
   # Assign positions to start and end of watch
   if (!is.null(posns))
@@ -50,34 +65,31 @@ ECSAS.create.aerial.watches <- function(dat,
 
   # Calc WatchLenKM
   watches <- watches %>% 
-    dplyr::mutate(WatchLenKM = geosphere::distGeo(cbind(LongStart, LatStart), 
+    dplyr::mutate(WatchLenKm = geosphere::distGeo(cbind(LongStart, LatStart), 
                                            cbind(LongEnd,  LatEnd))/1000,
            CalcDurMin = watchlen/60)
+  
+  # Check for missing positions
+  if (any(is.na(watches$LatStart)) || any(is.na(watches$LatEnd))) {
+    message(sprintf("ECSAS.create.aerial.watches: Warning: positions could not be found for some watches"))
+  }
+  
   watches
 }
 
 
-# New idea: pass in pause/resume table and subset for current transect. 
-# 
-# Then
-# insert "observation" records for each pause/resume with ALPHA == "PAUSE/RESUME" 
-# StartTime == pause time and EndTime == resume tim
-# 
-# Then want to break the dataframe into contiguous chunks between each pause/resum.
-# Do this by getting the row indices of all pause/resume records and use this as the
-# breaks to cut the vector of dataframe row indices 1:nrow(dat). 
-# 
-# For each chunk 
-# create n watches (new dataframe? with columns for start/end time and posn?)
-# from start of chunk to end of chunk (think about how to get 
-# these times - for the first chunk the starttime is transect start time, and end
-# time is pause or end of transect if no pause/resume records. For next chunk,
-# start time is resume time of first pause/resume record and end is either next 
-# pause or end of transect, etc.
-# Finally, assign the correct watch to each observation row by findind the watch 
-# records whose start/end times include the observation. Need to think about 
-# which watch an observation on the boundary belongs to. See new dplyr tweet 
-# about  join_by helpers used with dates.
+# Create the watches for a given transect.
+#
+# Pass in pause/resume table and subset for current transect.
+#
+# Create a dataframe of bounds that defines the times of chunks of on-effort
+# separated by pause/resumes.
+#
+# For each chunk create n watches with columns for start/end time from start of
+# chunk to end of chunk. For the first chunk the starttime is transect start
+# time, and end time is pause or end of transect if no pause/resume records. For
+# next chunk, start time is resume time of first pause/resume record and end is
+# either next pause or end of transect, etc.
 create.aerial.watch.by.transect <- function(dat, 
                                             watchlen, 
                                             posns = NULL, 
@@ -123,7 +135,9 @@ create.aerial.watch.by.transect <- function(dat,
 
   stopifnot(length(breaks) > 1)
 
-  # Add a factor to identify each chunk of data
+  # Add a factor to identify each chunk of data. Bounds
+  # is just a few rows indicating start/end times of chunks 
+  # There are no actual observations here.
   bounds <- bounds %>% 
     dplyr::mutate(chunk = cut(1:nrow(.), breaks = breaks, include.lowest = TRUE))
 
@@ -150,7 +164,7 @@ expand.pr <- function(pr) {
   rbind(pauses, resumes)
 }
 
-
+# Create the watches for each chunk.
 create.chunk.watches <- function(chunk, watchlen, transID){
   stopifnot(nrow(chunk) == 2)
   
