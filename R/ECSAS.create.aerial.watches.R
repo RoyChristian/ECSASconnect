@@ -71,17 +71,18 @@ ECSAS.create.aerial.watches <- function(dat,
     
     watches <- watches %>% 
       mutate(posns = poslist)
-  }
-
-  # Calc WatchLenKM
-  watches <- watches %>% 
-    dplyr::mutate(WatchLenKm = geosphere::distGeo(cbind(LongStart, LatStart), 
-                                           cbind(LongEnd,  LatEnd))/1000,
-           CalcDurMin = as.integer(WatchEndTime - WatchStartTime)/60)
-  
-  # Check for missing positions
-  if (any(is.na(watches$LatStart)) || any(is.na(watches$LatEnd))) {
-    message(sprintf("ECSAS.create.aerial.watches: Warning: positions could not be found for some watches"))
+    
+    
+    # Calc WatchLenKM
+    watches <- watches %>% 
+      dplyr::mutate(WatchLenKm = geosphere::distGeo(cbind(LongStart, LatStart), 
+                                                    cbind(LongEnd,  LatEnd))/1000,
+                    CalcDurMin = as.integer(WatchEndTime - WatchStartTime)/60)
+    
+    # Check for missing positions
+    if (any(is.na(watches$LatStart)) || any(is.na(watches$LatEnd))) {
+      message(sprintf("ECSAS.create.aerial.watches: Warning: positions could not be found for some watches"))
+    }
   }
   
   watches
