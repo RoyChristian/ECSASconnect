@@ -55,7 +55,7 @@ ECSAS.create.aerial.watches <- function(dat,
     purrr::map_dfr(create.aerial.watch.by.transect, watchlen, posns, pr, verbose)
 
   # Assign positions to start and end of watch
-  if (!is.null(posns))
+  if (!is.null(posns)) {
     watches <- watches %>% 
       dplyr::left_join(posns, by = c("WatchStartTime" = "datetime")) %>% 
       dplyr::rename(LatStart = lat, LongStart = long, Altitude = alt) %>% 
@@ -63,11 +63,21 @@ ECSAS.create.aerial.watches <- function(dat,
       dplyr::rename(LatEnd = lat, LongEnd = long) %>% 
       dplyr::select(-alt)
 
+    
+    # add all gps points for each watch as a list column or dataframe col.
+    poslist <- watches %>% 
+      split(1:nrow(.)) %>% 
+      map(get.watch.posns, posns = posns)
+    
+    watches <- watches %>% 
+      mutate(posns = poslist)
+  }
+
   # Calc WatchLenKM
   watches <- watches %>% 
     dplyr::mutate(WatchLenKm = geosphere::distGeo(cbind(LongStart, LatStart), 
                                            cbind(LongEnd,  LatEnd))/1000,
-           CalcDurMin = watchlen/60)
+           CalcDurMin = as.integer(WatchEndTime - WatchStartTime)/60)
   
   # Check for missing positions
   if (any(is.na(watches$LatStart)) || any(is.na(watches$LatEnd))) {
@@ -77,6 +87,13 @@ ECSAS.create.aerial.watches <- function(dat,
   watches
 }
 
+
+get.watch.posns <- function(watch, posns) {
+  ret <-
+    filter(posns,
+           between(datetime, watch$WatchStartTime, watch$WatchEndTime))
+  ret
+}
 
 # Create the watches for a given transect.
 #
