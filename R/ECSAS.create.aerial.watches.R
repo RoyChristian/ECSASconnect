@@ -74,7 +74,7 @@ ECSAS.create.aerial.watches <- function(dat,
     
     # Calc WatchLenKM
     watches <- watches %>% 
-      dplyr::mutate(WatchLenKmStrtEnd = geosphere::dist1Geo(cbind(LongStart, LatStart), 
+      dplyr::mutate(WatchLenKmStrtEnd = geosphere::distGeo(cbind(LongStart, LatStart), 
                                                     cbind(LongEnd,  LatEnd))/1000,
                     CalcDurMin = as.integer(WatchEndTime - WatchStartTime)/60)
     
