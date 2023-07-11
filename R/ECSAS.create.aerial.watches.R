@@ -72,10 +72,9 @@ ECSAS.create.aerial.watches <- function(dat,
     watches <- watches %>% 
       mutate(posns = poslist)
     
-    
     # Calc WatchLenKM
     watches <- watches %>% 
-      dplyr::mutate(WatchLenKm = geosphere::distGeo(cbind(LongStart, LatStart), 
+      dplyr::mutate(WatchLenKmStrtEnd = geosphere::dist1Geo(cbind(LongStart, LatStart), 
                                                     cbind(LongEnd,  LatEnd))/1000,
                     CalcDurMin = as.integer(WatchEndTime - WatchStartTime)/60)
     
@@ -88,7 +87,7 @@ ECSAS.create.aerial.watches <- function(dat,
   watches
 }
 
-
+# get all positions during a watch
 get.watch.posns <- function(watch, posns) {
   ret <-
     filter(posns,
