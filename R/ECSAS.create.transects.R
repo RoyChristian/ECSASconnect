@@ -167,7 +167,7 @@ ECSAS.create.transects <- function(dat, angle.thresh = NULL, max.lag = 10,
   lines <- dat %>% 
     sp::split(dat$Sample.Label) %>% 
     lapply(function(x) sp::Lines(list(sp::Line(sp::coordinates(x))), x$Sample.Label[1L])) %>% 
-    sp::SpatialLines()
+    sp::SpatialLines(proj4string = CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"))
   
   # create data row for each transect and create spatialLinesDataFrame
   data <- dat@data %>% 
@@ -192,7 +192,7 @@ ECSAS.create.transects <- function(dat, angle.thresh = NULL, max.lag = 10,
   
   rownames(data) <- data$Sample.Label # deprecated for tibbles. not sure what it was used for
   l <- sp::SpatialLinesDataFrame(lines, data)
-  sp::proj4string(l) <- sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+  # sp::proj4string(l) <- sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
   if (!is.null(CRS))
     l <- sp::spTransform(l, CRS)
   l

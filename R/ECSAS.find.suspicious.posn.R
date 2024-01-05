@@ -47,9 +47,7 @@
 #'@seealso \code{\link{ECSAS.extract()}}
 #'
 ECSAS.find.suspicious.posn <- function(dat = NULL, diff.thresh.pct = 50, speed.thresh = 20, 
-                                       leave = NULL, debug = FALSE){
-  
-  if(debug) browser()
+                                       leave = NULL){
   
   # need to do arg checking
   

@@ -23,7 +23,7 @@ add.final.point <- function(df, ignore_empty_dir = FALSE, debug = FALSE){
   df
 }
 
-# projet endpoint for a specific watch and recalc WatchLenKm.
+# project endpoint for a specific watch and recalc WatchLenKm.
 # If ignore_empty_dir is TRUE, and row$PlatformDir is 1, "ND" or NA, then
 # the point will be projected to the north.
 project.endpoint <- function(row, ignore_empty_dir = FALSE, debug = FALSE) {
@@ -73,7 +73,7 @@ get.platform.direction <- function(watch, ignore_empty_dir = FALSE){
   
   nrow(watch) == 1 || stop(sprintf("get.platform.direction: watch can only have one row not %d.", nrow(watch)))
 
-  # Just default to returning north if direcetion is NA and were ignoring
+  # Just default to returning north if direction is NA and were ignoring
   # empty directions.
   if (ignore_empty_dir && is.na(watch$PlatformDir))  
     return(0)
@@ -81,7 +81,7 @@ get.platform.direction <- function(watch, ignore_empty_dir = FALSE){
   if("PlatformDirDeg" %in% colnames(watch) && !is.na(watch$PlatformDirDeg))
     res <- watch$PlatformDirDeg
   else {
-    if (is.integer(watch$PlatformDir))
+    if (is.numeric(watch$PlatformDir))
       if (isTRUE(ignore_empty_dir))
         res <- switch(EXPR = as.character(watch$PlatformDir), "1" = 0, "2" = 0, "3" = 45, 
                     "4" = 90, "5" = 135, "6" = 180, "7" = 225, "8" = 270, 
