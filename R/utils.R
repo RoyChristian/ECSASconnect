@@ -46,6 +46,28 @@ project.endpoint <- function(row, ignore_empty_dir = FALSE, debug = FALSE) {
     )
 }
 
+# Checks each string in specs to ensure it is a 4-letter code
+# Returns TRUE is all ok, otherwise a single string which is a concatenation
+# of all errors separated by ";"
+check_species_codes <- function(specs) {
+  # Check length of each species code
+  x <- purrr::map(specs, check_string_len, len = 4) %>% 
+    setNames(specs)
+    
+  # Remove ones with no issues
+  probs <- Filter(Negate(isTRUE), x) 
+  
+  # Convert list of named error strings to char vector which includes species
+  # codes
+  if (length(probs) != 0){
+    res <- purrr::imap_chr(probs, ~ paste0("Species code '", .y, "': ", .x)) %>% 
+      stringr::str_flatten(collapse = "; ")
+  } else
+    res <- TRUE
+  
+  res
+}
+
 # function that checks if argument is a string of length n
 checkStringLen <- check_string_len <- function(x, len = 1) {
   res <- checkmate::check_integerish(len, len = 1, any.missing = FALSE, all.missing = FALSE, )

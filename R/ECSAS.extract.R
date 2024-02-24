@@ -43,6 +43,11 @@
 #'@param ind.tables.only \[logical(1), default: \sQuote{FALSE}]\cr Indicates if two
 #'  individual tables for watch/cruise, and observations should be returned
 #'  rather than a single table with all columns combined. See Value section.
+#'@param include.empty.watches \[logical(1), default: \sQuote{TRUE}]\cr If \sQuote{TRUE},
+#'  the output will contain a single row for each watch wihch contained no observations of the
+#'  requested species, in addition to the rows for each observation. These so-called
+#'  "zero" rows are distinguished by an \sQuote{NA} value in the \sQuote{FlockID} column.
+#'  If \sQuote{FALSE}, the output only contains rows for the observations.
 #'@param ecsas.path \[character, default: \sQuote{NULL}]\cr Full path name to the ECSAS
 #'  database. If NULL, the path is built from \code{ecsas.drive} and
 #'  \code{ecsas.file}.
@@ -121,13 +126,12 @@ ECSAS.extract <-  function(species = NULL,
                            intransect.only = TRUE,
                            distMeth = c(14, 20),
                            ind.tables.only = FALSE,
+                           include.empty.watches = TRUE,
                            ecsas.path = NULL,
                            ecsas.drive = "C:/Users/christian/Dropbox/ECSAS", 
-                           ecsas.file = "Master ECSAS_backend v 3.31.mdb", 
-                           debug = FALSE) {
+                           ecsas.file = "Master ECSAS_backend v 3.31.mdb"
+                           ) {
 
-  if(debug) browser()
-  
   if(!missing(intransect))
     stop("Function argument 'intransect' is deprecated - please use intransect.only instead.")
   
@@ -136,7 +140,7 @@ ECSAS.extract <-  function(species = NULL,
   
   checkmate::assert(
     checkmate::check_null(species),
-    check_string_len(species, len = 4), 
+    check_species_codes(species), 
     add = coll
   )
   
@@ -178,7 +182,12 @@ ECSAS.extract <-  function(species = NULL,
     add = coll
   )
   
-  checkmate::assert_logical(debug, any.missing = FALSE, len = 1, add = coll)
+  checkmate::assert(
+    checkmate::check_null(include.empty.watches),
+    checkmate::check_logical(include.empty.watches, any.missing = FALSE, len = 1),
+    add = coll
+  )
+  
   checkmate::reportAssertions(coll)
   
   # initialize various SQL sub-clauses here. Simplifies if-then-else logic below.
@@ -316,10 +325,10 @@ ECSAS.extract <-  function(species = NULL,
 
     # Form the WHERE clause that is based on the species number instead of the
     # alpha code
-    nspecies <- paste0(sapply(1:length(species), function(i) {
-      paste("(tblSighting.SpecInfoID)=", speciesInfo[speciesInfo$Alpha == species[i], ]$SpecInfoID, sep = "")
-      }), collapse = " Or ")
-    sp.selection <- paste("AND (", nspecies, ")", sep = "")
+    spec.ids <- dplyr::filter(speciesInfo, Alpha %in% species) %>% 
+      dplyr::pull("SpecInfoID")
+    spec.clauses <- paste0(paste0("(tblSighting.SpecInfoID)=", spec.ids, sep = ""), collapse = " Or ")
+    sp.selection <- paste("AND (", spec.clauses, ")", sep = "")
   } 
 
   # Write the query to import the table for sighting
@@ -490,7 +499,10 @@ ECSAS.extract <-  function(species = NULL,
   if (ind.tables.only) {
     list(watches = droplevels(watches), sightings = droplevels(sightings))
   } else {
-    droplevels(dplyr::left_join(watches, sightings, by = "WatchID"))
+    if (include.empty.watches)
+      droplevels(dplyr::left_join(watches, sightings, by = "WatchID"))
+    else
+      droplevels(dplyr::right_join(watches, sightings, by = "WatchID"))
   }
   # End
 }
