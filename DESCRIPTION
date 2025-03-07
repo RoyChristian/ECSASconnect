@@ -5,7 +5,7 @@ Title: Import and export data from the Eastern Canada Seabirds at Sea (ECSAS)
 Version: 0.6.9
 Date: 2022-10-06
 Author: Christian Roy, Dave Fifield, Francois Rousseu, Matthieu Beaumont
-Maintainer: Dave Fifield <dave.fifield@canada.ca>
+Maintainer: Dave Fifield <dave.fifield@ec.gc.ca>
 Description: This package will allow the user to extract data from the ECSAS Access
     database and to export data from the SOMEC to the ECSAS access database. As of June 2022
     the package now works with 64-bit R as long as 64-bit Access drivers are installed

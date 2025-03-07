@@ -44,7 +44,7 @@
 #'  individual tables for watch/cruise, and observations should be returned
 #'  rather than a single table with all columns combined. See Value section.
 #'@param include.empty.watches \[logical(1), default: \sQuote{TRUE}]\cr If \sQuote{TRUE},
-#'  the output will contain a single row for each watch wihch contained no observations of the
+#'  the output will contain a single row for each watch which contained no observations of the
 #'  requested species, in addition to the rows for each observation. These so-called
 #'  "zero" rows are distinguished by an \sQuote{NA} value in the \sQuote{FlockID} column.
 #'  If \sQuote{FALSE}, the output only contains rows for the observations.
