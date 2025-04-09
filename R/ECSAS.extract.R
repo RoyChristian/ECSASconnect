@@ -370,6 +370,7 @@ ECSAS.extract <-  function(species = NULL,
                                 "tblCruise.Program",
                                 "tblCruise.[Start Date] AS [StartDate]",
                                 "tblCruise.[End Date] AS [EndDate]",
+                                "tblCruise.[DataSharing]",
                                 "tblWatch.WatchID",
                                 "tblWatch.TransectNo",
                                 "tblWatch.PlatformClass",
@@ -470,7 +471,7 @@ ECSAS.extract <-  function(species = NULL,
     dplyr::left_join(platform.activity, by = "PlatformTypeID") %>% 
     dplyr::left_join(cruise.notes, by = "CruiseID") %>% 
     dplyr::mutate(ObserverName = as.factor(gsub(", " , "_", as.character(ObserverName)))) %>% 
-    dplyr::select(CruiseID, CruiseNote, Program, PlatformName, Atlantic, Quebec, Arctic, ESRF, 
+    dplyr::select(CruiseID, CruiseNote, DataSharing, Program, PlatformName, Atlantic, Quebec, Arctic, ESRF, 
                   AZMP, FSRS, StartDate, EndDate, WatchID, TransectNo, ObserverName, PlatformClass, 
                   WhatCount, TransNearEdge, TransFarEdge, DistMeth, Date, Year, Month, Week, Day,
                   StartTime, EndTime, CalcDurMin, LatStart, LongStart, LatEnd, LongEnd, PlatformSpeed,
