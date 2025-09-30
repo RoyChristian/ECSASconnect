@@ -8,8 +8,7 @@ ECSAS.find.suspicious.posn(
   dat = NULL,
   diff.thresh.pct = 50,
   speed.thresh = 20,
-  leave = NULL,
-  debug = FALSE
+  leave = NULL
 )
 }
 \arguments{

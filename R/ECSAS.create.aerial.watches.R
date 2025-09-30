@@ -67,10 +67,10 @@ ECSAS.create.aerial.watches <- function(dat,
     # add all gps points for each watch as a list column or dataframe col.
     poslist <- watches %>% 
       split(1:nrow(.)) %>% 
-      map(get.watch.posns, posns = posns)
+      purrr::map(get.watch.posns, posns = posns)
     
     watches <- watches %>% 
-      mutate(posns = poslist)
+      dplyr::mutate(posns = poslist)
     
     # Calc WatchLenKM
     watches <- watches %>% 
@@ -90,8 +90,8 @@ ECSAS.create.aerial.watches <- function(dat,
 # get all positions during a watch
 get.watch.posns <- function(watch, posns) {
   ret <-
-    filter(posns,
-           between(datetime, watch$WatchStartTime, watch$WatchEndTime))
+    dplyr::filter(posns,
+           dplyr::between(datetime, watch$WatchStartTime, watch$WatchEndTime))
   ret
 }
 

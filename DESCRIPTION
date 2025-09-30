@@ -2,7 +2,7 @@ Package: ECSASconnect
 Type: Package
 Title: Import and export data from the Eastern Canada Seabirds at Sea (ECSAS)
     and the Suivi des oiseaux en mer de l'est du Canada (SOMEC) databases
-Version: 0.6.11
+Version: 0.6.12
 Date: 2022-10-06
 Author: Christian Roy, Dave Fifield, Francois Rousseu, Matthieu Beaumont
 Maintainer: Dave Fifield <dave.fifield@ec.gc.ca>
@@ -25,7 +25,7 @@ Imports:
     lubridate
 License: GPL-2
 Encoding: UTF-8
-RoxygenNote: 7.2.2
+RoxygenNote: 7.3.2
 Roxygen: list(markdown = TRUE)
 Suggests: 
     testthat

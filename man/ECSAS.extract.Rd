@@ -17,10 +17,10 @@ ECSAS.extract(
   intransect.only = TRUE,
   distMeth = c(14, 20),
   ind.tables.only = FALSE,
+  include.empty.watches = TRUE,
   ecsas.path = NULL,
   ecsas.drive = "C:/Users/christian/Dropbox/ECSAS",
-  ecsas.file = "Master ECSAS_backend v 3.31.mdb",
-  debug = FALSE
+  ecsas.file = "Master ECSAS_backend v 3.31.mdb"
 )
 }
 \arguments{
@@ -73,6 +73,12 @@ no other options preclude this.}
 \item{ind.tables.only}{[logical(1), default: \sQuote{FALSE}]\cr Indicates if two
 individual tables for watch/cruise, and observations should be returned
 rather than a single table with all columns combined. See Value section.}
+
+\item{include.empty.watches}{[logical(1), default: \sQuote{TRUE}]\cr If \sQuote{TRUE},
+the output will contain a single row for each watch which contained no observations of the
+requested species, in addition to the rows for each observation. These so-called
+"zero" rows are distinguished by an \sQuote{NA} value in the \sQuote{FlockID} column.
+If \sQuote{FALSE}, the output only contains rows for the observations.}
 
 \item{ecsas.path}{[character, default: \sQuote{NULL}]\cr Full path name to the ECSAS
 database. If NULL, the path is built from \code{ecsas.drive} and
