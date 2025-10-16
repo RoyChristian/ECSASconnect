@@ -46,13 +46,15 @@
 #'
 #'@seealso \code{\link{ECSAS.extract()}}
 #'
-ECSAS.find.suspicious.posn <- function(dat = NULL, diff.thresh.pct = 50, speed.thresh = 20, 
-                                       leave = NULL){
+ECSAS.find.suspicious.posn <- function(dat = NULL,
+                                       diff.thresh.pct = 50,
+                                       speed.thresh = 20,
+                                       leave = NULL) {
   
   # need to do arg checking
   
   dat %>% 
-    distinct(CruiseID, WatchID, .keep_all = T) %>% 
+    dplyr::distinct(CruiseID, WatchID, .keep_all = T) %>% 
     dplyr::mutate(dist_dr_km = PlatformSpeed * (CalcDurMin / 60) * 1.852,
            dist_geo_km = geosphere::distGeo(cbind(LongStart, LatStart), cbind(LongEnd,  LatEnd))/1000,
            dist_diff_km = abs(dist_dr_km - dist_geo_km),
