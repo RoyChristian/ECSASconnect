@@ -3,8 +3,7 @@ is.empty <- function(x){
 }
 
 # Add a final point at the end of a transect
-add.final.point <- function(df, ignore_empty_dir = FALSE, debug = FALSE){
-  if(debug) browser()
+add.final.point <- function(df, ignore_empty_dir = FALSE){
   
   # can't remember what this is for, but judging by the code below, perhaps
   # in some use cases the sample_label is stored in the rowname??
@@ -26,8 +25,7 @@ add.final.point <- function(df, ignore_empty_dir = FALSE, debug = FALSE){
 # project endpoint for a specific watch and recalc WatchLenKm.
 # If ignore_empty_dir is TRUE, and row$PlatformDir is 1, "ND" or NA, then
 # the point will be projected to the north.
-project.endpoint <- function(row, ignore_empty_dir = FALSE, debug = FALSE) {
-  if(debug) browser()
+project.endpoint <- function(row, ignore_empty_dir = FALSE) {
   
   if(is.empty(row$LongStart) || is.empty(row$LatStart) || is.empty(row$CalcDurMin) ||
      is.empty(row$PlatformSpeed))

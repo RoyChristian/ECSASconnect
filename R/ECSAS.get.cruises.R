@@ -8,18 +8,10 @@
 #' 
 #'@section Author:Dave Fifield
 #'
-ECSAS.get.cruises <- function(ecsas.path = NULL, debug = FALSE) {
+ECSAS.get.cruises <- function(ecsas.path = NULL) {
 
-  coll = checkmate::makeAssertCollection()
-  checkmate::assert_file_exists(ecsas.path, add = coll)
-  checkmate::assert (
-    checkmate::check_null(debug),
-    checkmate::check_logical(debug, len = 1),
-    add = coll
-  )
-  checkmate::reportAssertions(coll)
+  checkmate::assert_file_exists(ecsas.path)
   
-  browser(expr = debug)
   channel1 <- RODBC::odbcConnectAccess2007(ecsas.path, uid="") 
   
   query.cruises <- paste("SELECT [q Cruise selector].CruiseID, ",

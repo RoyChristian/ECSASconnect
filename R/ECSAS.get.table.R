@@ -9,19 +9,13 @@
 #' 
 #'@section Author:Dave Fifield
 #'
-ECSAS.get.table <- function(table = NULL, ecsas.path = NULL, debug = FALSE) {
+ECSAS.get.table <- function(table = NULL, ecsas.path = NULL) {
 
   coll = checkmate::makeAssertCollection()
   checkmate::assert_file_exists(ecsas.path, add = coll)
   checkmate::assert_string(table, add = coll)
-  checkmate::assert (
-    checkmate::check_null(debug),
-    checkmate::check_logical(debug, len = 1),
-    add = coll
-  )
   checkmate::reportAssertions(coll)
   
-  browser(expr = debug)
   channel1 <- RODBC::odbcConnectAccess2007(ecsas.path, uid="") 
   
   ret <- RODBC::sqlFetch(channel1, table) %>% ensure_data_is_returned 

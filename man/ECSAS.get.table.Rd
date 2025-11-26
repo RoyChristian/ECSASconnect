@@ -4,7 +4,7 @@
 \alias{ECSAS.get.table}
 \title{Get ECSAS table from database}
 \usage{
-ECSAS.get.table(table = NULL, ecsas.path = NULL, debug = FALSE)
+ECSAS.get.table(table = NULL, ecsas.path = NULL)
 }
 \arguments{
 \item{table}{character vector (of length 1) naming table to be returned.}

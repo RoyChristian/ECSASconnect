@@ -4,7 +4,7 @@
 \alias{ECSAS.get.cruises}
 \title{Get ECSAS cruises  from database}
 \usage{
-ECSAS.get.cruises(ecsas.path = NULL, debug = FALSE)
+ECSAS.get.cruises(ecsas.path = NULL)
 }
 \arguments{
 \item{ecsas.path}{(required) full path name to the ECSAS database.}
