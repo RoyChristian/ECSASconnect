@@ -133,3 +133,5 @@ get.platform.direction <- function(watch, ignore_empty_dir = FALSE){
 is.nd <- function(x) {
   is.na(x) || is.null(x) || is.nan(x) || x == 1
 }
+
+

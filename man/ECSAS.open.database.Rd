@@ -4,25 +4,17 @@
 \alias{ECSAS.open.database}
 \title{Return an open RODBC channel to an ECSAS database}
 \usage{
-ECSAS.open.database(channel)
-
-ECSAS.open.database(channel)
+ECSAS.open.database(ecsas.path = NULL)
 }
 \arguments{
-\item{channel}{(required) an open RODBC channel}
-
 \item{ecsas.path}{(required) full path name to the ECSAS database.}
 }
 \description{
 This function will connect to the Access database and return a
 channel object from \code{ RODBC::odbcConnectAccess2007} suitable for use in
 other database operation.
-
-This function close a channel returned by \link{ECSAS.open.database}
 }
 \section{Author}{
-Dave Fifield
-
 Dave Fifield
 }
 

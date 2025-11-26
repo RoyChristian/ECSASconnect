@@ -20,7 +20,8 @@ ECSAS.extract(
   include.empty.watches = TRUE,
   ecsas.path = NULL,
   ecsas.drive = "C:/Users/christian/Dropbox/ECSAS",
-  ecsas.file = "Master ECSAS_backend v 3.31.mdb"
+  ecsas.file = "Master ECSAS_backend v 3.31.mdb",
+  channel = NULL
 )
 }
 \arguments{
@@ -90,7 +91,10 @@ longer useful and should be deprecated.}
 
 \item{ecsas.file}{[character, default: \sQuote{\code{"Master ECSAS_backend v
  3.31.mdb"}}]\cr Name of the ECSAS Access database file. The default value is
-likely no longer useful and should be deprecated.}
+likely no longer useful and should be deprecated. Only used in \code{ecsas.path}
+is \code{NULL}.
+#'@param channel [optional, default: \sQuote{NULL}]\cr An existing open RODBC channel to the ECSAS database.
+Ignored if either \code{ecsas.path} or \code{ecsas.drive} and \code{ecsas.file} are provided.}
 }
 \value{
 By default the function will produce a data frame that contains all

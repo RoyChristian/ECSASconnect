@@ -25,7 +25,7 @@ ECSAS.open.database <- function(ecsas.path = NULL) {
 #' 
 #'@section Author:Dave Fifield
 #'
-ECSAS.open.database <- function(channel) {
+ECSAS.close.database <- function(channel) {
   
   RODBC::odbcClose(channel) 
 }

@@ -4,13 +4,16 @@
 \alias{ECSAS.run.query}
 \title{Execute an SQL query on an ECSAS database}
 \usage{
-ECSAS.run.query(ecsas.path, sqlstr)
+ECSAS.run.query(ecsas.path = NULL, sqlstr, channel = NULL)
 }
 \arguments{
 \item{ecsas.path}{[character]\cr Full path name to the ECSAS
 database.}
 
-\item{strsql}{SQL string to execute}
+\item{sqlstr}{SQL string to execute}
+
+\item{channel}{[optional]\cr An existing open RODBC channel to the ECSAS database.
+Ignored if ecsas.path is provided.}
 }
 \value{
 Returns whatever the query returned.

@@ -57,8 +57,10 @@
 #'  longer useful and should be deprecated.
 #'@param ecsas.file  \[character, default: \sQuote{\code{"Master ECSAS_backend v
 #'  3.31.mdb"}}]\cr Name of the ECSAS Access database file. The default value is
-#'  likely no longer useful and should be deprecated.
-#'
+#'  likely no longer useful and should be deprecated. Only used in \code{ecsas.path}
+#'  is \code{NULL}.
+#'#'@param channel \[optional, default: \sQuote{NULL}]\cr An existing open RODBC channel to the ECSAS database.
+#'  Ignored if either \code{ecsas.path} or \code{ecsas.drive} and \code{ecsas.file} are provided.
 #'
 #'@details
 #' Using the default values of \code{intransect.only = TRUE} and 
@@ -129,7 +131,8 @@ ECSAS.extract <-  function(species = NULL,
                            include.empty.watches = TRUE,
                            ecsas.path = NULL,
                            ecsas.drive = "C:/Users/christian/Dropbox/ECSAS", 
-                           ecsas.file = "Master ECSAS_backend v 3.31.mdb"
+                           ecsas.file = "Master ECSAS_backend v 3.31.mdb",
+                           channel = NULL
                            ) {
 
   if(!missing(intransect))
@@ -173,6 +176,7 @@ ECSAS.extract <-  function(species = NULL,
   checkmate::assert(
     checkmate::check_file_exists(ecsas.path),
     checkmate::check_file_exists(file.path(ecsas.drive, ecsas.file)), 
+    checkmate::check_class(channel, "RODBC"),
     add = coll
   )
 
@@ -189,6 +193,9 @@ ECSAS.extract <-  function(species = NULL,
   )
   
   checkmate::reportAssertions(coll)
+  
+  # close channel1 by default
+  leave.open = FALSE
   
   # initialize various SQL sub-clauses here. Simplifies if-then-else logic below.
   intransect.selection <- ""  
@@ -230,11 +237,16 @@ ECSAS.extract <-  function(species = NULL,
   # user has both 32-bit and 64-bit Access drivers installed. See 
   # https://stackoverflow.com/questions/45064057/reading-data-from-32-bit-access-db-using-64-bit-r
   # and https://www.microsoft.com/en-US/download/details.aspx?id=13255
+
   if(!is.null(ecsas.path)) {
     channel1 <- RODBC::odbcConnectAccess2007(ecsas.path, uid="")
-  } else {
+  } else if (!is.null(ecsas.drive) & !is.null(ecsas.file)) {
     channel1 <- RODBC::odbcConnectAccess2007(file.path(ecsas.drive, ecsas.file), uid="")
-  }
+  } else if(!is.null(channel)){
+    channel1 = channel
+    leave.open = TRUE
+  } else
+    stop("ECSAS.extract: Could not open database.")
   
   # generic where-clause start and end. "1=1" is a valid expression that does
   # nothing but is syntactically correct in case there are no other where
@@ -449,7 +461,7 @@ ECSAS.extract <-  function(species = NULL,
   seastates <- RODBC::sqlFetch(channel1, "lkpSeastate") %>% ensure_data_is_returned 
   
   #close connection
-  RODBC::odbcClose(channel1)
+  if (!leave.open) RODBC::odbcClose(channel1)
 
   # Calculate watch length in km via dead reckoning if start and end positions
   # are not avail, otherwise use ellipsoid method. Note use of more accurate

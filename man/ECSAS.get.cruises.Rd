@@ -4,10 +4,13 @@
 \alias{ECSAS.get.cruises}
 \title{Get ECSAS cruises  from database}
 \usage{
-ECSAS.get.cruises(ecsas.path = NULL)
+ECSAS.get.cruises(ecsas.path = NULL, channel = NULL)
 }
 \arguments{
-\item{ecsas.path}{(required) full path name to the ECSAS database.}
+\item{ecsas.path}{(optional) full path name to the ECSAS database.}
+
+\item{channel}{(optional) an existing open RODBC channel to the ECSAS database.
+Ignored if ecsas.path is provided.}
 }
 \description{
 This function will connect to the Access database and return a

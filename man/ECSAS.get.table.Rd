@@ -4,12 +4,14 @@
 \alias{ECSAS.get.table}
 \title{Get ECSAS table from database}
 \usage{
-ECSAS.get.table(table = NULL, ecsas.path = NULL)
+ECSAS.get.table(table = NULL, ecsas.path = NULL, channel = NULL)
 }
 \arguments{
 \item{table}{character vector (of length 1) naming table to be returned.}
 
-\item{ecsas.path}{(default NULL) full path name to the ECSAS database.}
+\item{ecsas.path}{(optional, default NULL) full path name to the ECSAS database.
+#'@param channel (optional, default NULL) an existing open RODBC channel to the ECSAS database.
+Ignored if ecsas.path is provided.}
 }
 \description{
 This function will connect to the Access database and return a
