@@ -59,7 +59,7 @@
 #'  3.31.mdb"}}]\cr Name of the ECSAS Access database file. The default value is
 #'  likely no longer useful and should be deprecated. Only used in \code{ecsas.path}
 #'  is \code{NULL}.
-#'#'@param channel \[optional, default: \sQuote{NULL}]\cr An existing open RODBC channel to the ECSAS database.
+#'@param channel \[optional, default: \sQuote{NULL}]\cr An existing open RODBC channel to the ECSAS database.
 #'  Ignored if either \code{ecsas.path} or \code{ecsas.drive} and \code{ecsas.file} are provided.
 #'
 #'@details
@@ -174,13 +174,6 @@ ECSAS.extract <-  function(species = NULL,
   )
 
   checkmate::assert(
-    checkmate::check_file_exists(ecsas.path),
-    checkmate::check_file_exists(file.path(ecsas.drive, ecsas.file)), 
-    checkmate::check_class(channel, "RODBC"),
-    add = coll
-  )
-
-  checkmate::assert(
     checkmate::check_null(ind.tables.only),
     checkmate::check_logical(ind.tables.only, any.missing = FALSE, len = 1),
     add = coll
@@ -193,9 +186,6 @@ ECSAS.extract <-  function(species = NULL,
   )
   
   checkmate::reportAssertions(coll)
-  
-  # close channel1 by default
-  leave.open = FALSE
   
   # initialize various SQL sub-clauses here. Simplifies if-then-else logic below.
   intransect.selection <- ""  
@@ -233,20 +223,8 @@ ECSAS.extract <-  function(species = NULL,
                                   ")")
   }
 
-  ### open connection. This should work on both 32-bit R and 64-bit R as long as
-  # user has both 32-bit and 64-bit Access drivers installed. See 
-  # https://stackoverflow.com/questions/45064057/reading-data-from-32-bit-access-db-using-64-bit-r
-  # and https://www.microsoft.com/en-US/download/details.aspx?id=13255
-
-  if(!is.null(ecsas.path)) {
-    channel1 <- RODBC::odbcConnectAccess2007(ecsas.path, uid="")
-  } else if (!is.null(ecsas.drive) & !is.null(ecsas.file)) {
-    channel1 <- RODBC::odbcConnectAccess2007(file.path(ecsas.drive, ecsas.file), uid="")
-  } else if(!is.null(channel)){
-    channel1 = channel
-    leave.open = TRUE
-  } else
-    stop("ECSAS.extract: Could not open database.")
+  # Get channel
+  ch <- ecsas.get.channel(ecsas.path, channel)
   
   # generic where-clause start and end. "1=1" is a valid expression that does
   # nothing but is syntactically correct in case there are no other where
@@ -317,7 +295,7 @@ ECSAS.extract <-  function(species = NULL,
   )
 
   # Execute query for species.  
-  speciesInfo <-  RODBC::sqlQuery(channel1, query.species) %>% 
+  speciesInfo <-  RODBC::sqlQuery(ch$channel, query.species) %>% 
     ensure_data_is_returned 
     
   # handle species specification
@@ -447,21 +425,21 @@ ECSAS.extract <-  function(species = NULL,
                           sep=" ")
 
   # Import all the tables needed
-  sightings <- RODBC::sqlQuery(channel1, query.sighting) %>% ensure_data_is_returned 
-  watches <- RODBC::sqlQuery(channel1, query.watches) %>% ensure_data_is_returned 
-  cruise.notes <- RODBC::sqlFetch(channel1, "tblCruiseNotes") %>% 
+  sightings <- RODBC::sqlQuery(ch$channel, query.sighting) %>% ensure_data_is_returned 
+  watches <- RODBC::sqlQuery(ch$channel, query.watches) %>% ensure_data_is_returned 
+  cruise.notes <- RODBC::sqlFetch(ch$channel, "tblCruiseNotes") %>% 
     ensure_data_is_returned %>% 
     dplyr::rename(CruiseNote = Note)
-  distance <- RODBC::sqlFetch(channel1, "lkpDistanceCenters") %>% ensure_data_is_returned 
-  observer <- RODBC::sqlFetch(channel1, "lkpObserver") %>% ensure_data_is_returned 
-  platform.name <- RODBC::sqlFetch(channel1, "lkpPlatform") %>% 
+  distance <- RODBC::sqlFetch(ch$channel, "lkpDistanceCenters") %>% ensure_data_is_returned 
+  observer <- RODBC::sqlFetch(ch$channel, "lkpObserver") %>% ensure_data_is_returned 
+  platform.name <- RODBC::sqlFetch(ch$channel, "lkpPlatform") %>% 
     ensure_data_is_returned %>% 
     dplyr::rename(PlatformName = PlatformText)
-  platform.activity <- RODBC::sqlFetch(channel1, "lkpPlatformType") %>% ensure_data_is_returned 
-  seastates <- RODBC::sqlFetch(channel1, "lkpSeastate") %>% ensure_data_is_returned 
+  platform.activity <- RODBC::sqlFetch(ch$channel, "lkpPlatformType") %>% ensure_data_is_returned 
+  seastates <- RODBC::sqlFetch(ch$channel, "lkpSeastate") %>% ensure_data_is_returned 
   
   #close connection
-  if (!leave.open) RODBC::odbcClose(channel1)
+  if (!ch$leave.open) RODBC::odbcClose(ch$channel)
 
   # Calculate watch length in km via dead reckoning if start and end positions
   # are not avail, otherwise use ellipsoid method. Note use of more accurate

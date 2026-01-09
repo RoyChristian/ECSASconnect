@@ -135,3 +135,59 @@ is.nd <- function(x) {
 }
 
 
+# Used by other functions to get an open channel to the database. Most
+# user-facing functions allow supplying either an open channel or a path to the
+# database. Those functions call this one to decide which mechanism to use. When
+# user-facing functions are called with an open channel, it is left open after
+# they exit otherwise it is closed. return list(channel, leave.open)
+ecsas.get.channel <- function(ecsas.path = NULL, channel = NULL) {
+  
+  checkmate::assert(checkmate::check_file_exists(ecsas.path),
+                    checkmate::check_class(channel, "RODBC"))
+  
+  ret <- list()
+  
+  # preferentially use channel if not null otherwise fall back to open
+  # ecsas.path
+  if (!is.null(channel)){
+    ret$channel = channel
+    ret$leave.open = TRUE
+  }else if(!is.null(ecsas.path)){
+    # open connection. This should work on both 32-bit R and 64-bit R as long as
+    # user has both 32-bit and 64-bit Access drivers installed. See 
+    # https://stackoverflow.com/questions/45064057/reading-data-from-32-bit-access-db-using-64-bit-r
+    # and https://www.microsoft.com/en-US/download/details.aspx?id=13255
+    ret$channel <- RODBC::odbcConnectAccess2007(ecsas.path, uid="") 
+    ret$leave.open <- FALSE
+  } else
+    stop("ecsas.get.channel: could get channel to database.")
+  
+  ret
+}
+
+
+# Runs insert_SQL (assumed to be in insert query) and returns the autonumber
+# value of the inserted record if the table has an autonumber field otherwise NA
+access_insert_return_id <- function(channel, insert_sql) {
+  # Run the INSERT
+  res <- RODBC::sqlQuery(channel, insert_sql)
+  
+  # Detect failure: sqlQuery returns a character vector of length > 0 on error
+  if (is.character(res) && length(res) > 0) {
+    stop("Insert failed: ", paste(res, collapse = " | "))
+  }
+  
+  # Query @@IDENTITY immediately
+  id_res <- RODBC::sqlQuery(channel, "SELECT @@IDENTITY AS new_id", errors = FALSE)
+  
+  # Extract scalar
+  if (is.data.frame(id_res) && ncol(id_res) == 1) {
+    val <- id_res[[1]][1]
+    # Access semantics: 0 means "no identity generated"
+    if (is.na(val) || val == 0) return(NA_integer_)
+    return(as.integer(val))
+  }
+  
+  # Fallback if unexpected
+  return(NA_integer_)
+}

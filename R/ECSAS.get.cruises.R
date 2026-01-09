@@ -11,32 +11,33 @@
 #'
 ECSAS.get.cruises <- function(ecsas.path = NULL, channel = NULL) {
 
-  checkmate::assert(checkmate::check_file_exists(ecsas.path),
-                    checkmate::check_class(channel, "RODBC"),
-                    add = coll)
+  # Get channel
+  ch <- ecsas.get.channel(ecsas.path, channel)
   
-  # close channel1 by default
-  leave.open = FALSE
+  # query.cruises <- paste("SELECT [q Cruise selector].CruiseID, ",
+  #   "[q Cruise selector].[Start Date], [q Cruise selector].[End Date], ",
+  #   "[q Cruise selector].Platform, [q Cruise selector].[Observer 1], ",
+  #   "[q Cruise selector].[Observer 2], [q Cruise selector].[Start Port], ",
+  #   "[q Cruise selector].[End Port], [q Cruise selector].Program, ",
+  #   "[q Cruise selector].Company",
+  #   " FROM [q Cruise selector]",
+  #   " ORDER BY [q Cruise selector].[Start Date] DESC", sep = ""
+  # )
+  # Get everything the cruise selector returns
+  query.cruises <- "SELECT [q Cruise selector].* FROM [q Cruise selector];"
+  cruises <- RODBC::sqlQuery(ch$channel, query.cruises) %>% ensure_data_is_returned 
   
-  if(!is.null(ecsas.path))
-    channel1 <- RODBC::odbcConnectAccess2007(ecsas.path, uid="") 
-  else if (!is.null(channel)){
-    channel1 = channel
-    leave.open = TRUE
-  } else
-    stop("ECSAS.get.cruises: could not open database.")
+  # All ECSAS times are UTC but tzone will not be set when data is read from
+  # ECSAS since Access has no timezone concept.
+  # Set timezone for all POSIXct fields to be UTC without converting the wall
+  # clock time.
+  cruises <- cruises %>%
+    dplyr::mutate(dplyr::across(
+      .cols = names(.)[sapply(., inherits, what = "POSIXct")],
+      .fns = ~ lubridate::force_tz(.x, "UTC")
+    ))
   
-  query.cruises <- paste("SELECT [q Cruise selector].CruiseID, ",
-    "[q Cruise selector].[Start Date], [q Cruise selector].[End Date], ",
-    "[q Cruise selector].Platform, [q Cruise selector].[Observer 1], ",
-    "[q Cruise selector].[Observer 2], [q Cruise selector].[Start Port], ",
-    "[q Cruise selector].[End Port], [q Cruise selector].Program, ",
-    "[q Cruise selector].Company",
-    " FROM [q Cruise selector]",
-    " ORDER BY [q Cruise selector].[Start Date] DESC", sep = ""
-  )
-  cruises <- RODBC::sqlQuery(channel1, query.cruises) %>% ensure_data_is_returned 
-  if (!leave.open) RODBC::odbcClose(channel1)
+  if (!ch$leave.open) RODBC::odbcClose(ch$channel)
   
   cruises
 }
