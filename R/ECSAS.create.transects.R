@@ -153,8 +153,6 @@ ECSAS.create.transects <- function(dat, angle.thresh = NULL, max.lag = 10,
       dat[i, "Sample.Label"] <- Sample.Label
   }
 
-  if(debug) browser()
-  
   # add a final point at end of each transect
   dat <- split(dat, dat$Sample.Label) %>% 
     purrr::map_df(add.final.point, ignore_empty_dir = ignore_empty_dir) %>% 
@@ -189,7 +187,8 @@ ECSAS.create.transects <- function(dat, angle.thresh = NULL, max.lag = 10,
               LongEnd = dplyr::last(save.long)
     ) %>% 
     as.data.frame()
-  
+
+  if(debug) browser()  
   rownames(data) <- data$Sample.Label # deprecated for tibbles. not sure what it was used for
   l <- sp::SpatialLinesDataFrame(lines, data)
   # sp::proj4string(l) <- sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
