@@ -338,6 +338,8 @@ ECSAS.extract <-  function(species = NULL,
                                 "tblSighting.Age",
                                 "tblSighting.Plumage",
                                 "tblSighting.Sex",
+                                "tblSighting.InGroup",
+                                "tblSighting.GroupID",
                                 "tblWatch.LatStart",
                                 "tblWatch.LongStart",
                                 "tblWatch.Date", sep=", "),
@@ -484,7 +486,7 @@ ECSAS.extract <-  function(species = NULL,
     dplyr::left_join(distance, by = "DistanceCode") %>% 
     dplyr::select(FlockID, WatchID, Alpha, English, Latin, Class, Seabird, Waterbird, ObsLat,
                  ObsLong, ObsTime, Distance, DistanceCode, InTransect, Association, Behaviour,
-                 FlightDir, FlySwim, Count, Age, Plumage, Sex)
+                 FlightDir, FlySwim, Count, Age, Plumage, Sex, InGroup, GroupID)
 
   # Return the final product
   if (ind.tables.only) {
