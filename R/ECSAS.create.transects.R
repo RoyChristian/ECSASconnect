@@ -204,7 +204,7 @@ ECSAS.create.transects <- function(dat, angle.thresh = NULL, max.lag = 10,
 #'@description Add a \code{Sample.Label} column to \code{wtchs} and set it to the
 #' corresponding \code{Sample.Label} from \code{trns} that each watch belongs to.
 #' 
-#'@param wtchs a dataframe of watches containing at least a column name WatchID
+#'@param wtchs a dataframe of watches containing at least a column named WatchID
 #'@param trns a transect object as returned by \code{ECSAS.create.transects()}.
 #'
 #'@details Simpy unnests the \code{Watches} list-column from \code{trns} and joins
@@ -215,10 +215,10 @@ ECSAS.create.transects <- function(dat, angle.thresh = NULL, max.lag = 10,
 ECSAS.add.sample.label <- function(wtchs, trns) {
   
   # make sure all transects have at least one watch
-  if(inherits(x, c("Spatial"))) {
+  if(inherits(trns, c("Spatial"))) {
     stopifnot(all(purrr::map_int(trns@data$Watches, length) > 0))
   } else {
-    stopifnot(all(purrr::map_int(Watches, length) > 0))
+    stopifnot(all(purrr::map_int(trns$Watches, length) > 0))
   }
   
   # Remove existing Sample.Label column
